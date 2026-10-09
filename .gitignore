@@ -1,0 +1,4 @@
+node_modules/
+package-lock.json
+# course hand-out, not part of the submission
+BPMN_Project_Assignments.pdf

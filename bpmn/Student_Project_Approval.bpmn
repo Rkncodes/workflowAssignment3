@@ -1,0 +1,952 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_StudentProjectApproval" targetNamespace="http://example.edu/bpmn/student-project-approval" exporter="hand-authored BPMN 2.0 (bpmn.io compatible)" exporterVersion="1.0">
+  <bpmn:collaboration id="Collaboration_ProjectApproval">
+    <bpmn:participant id="Participant_Department" name="Student Project Approval &amp; Allocation System" processRef="Process_StudentProjectApproval" />
+  </bpmn:collaboration>
+  <bpmn:message id="Msg_MissedDeadline" name="Missed-deadline notice" />
+  <bpmn:message id="Msg_LapseNotice" name="Lapse notice" />
+  <bpmn:message id="Msg_ClosureNotice" name="Closure notice" />
+  <bpmn:message id="Msg_RejectionNotice" name="Rejection notice with reasons" />
+  <bpmn:message id="Msg_ReviewReminder" name="Committee review reminder" />
+  <bpmn:message id="Msg_Withdrawal" name="Team withdrawal request" />
+  <bpmn:message id="Msg_WithdrawalConfirmation" name="Withdrawal confirmation" />
+  <bpmn:message id="Msg_GuideUnavailable" name="Guide unavailability report" />
+  <bpmn:message id="Msg_WaitlistNotice" name="Waiting-list notice" />
+  <bpmn:error id="Error_InvalidTeam" name="Invalid team" errorCode="INVALID_TEAM" />
+  <bpmn:error id="Error_SimilarityService" name="Similarity service unavailable" errorCode="SIMILARITY_UNAVAILABLE" />
+  <bpmn:error id="Error_DatabaseWrite" name="Database write error" errorCode="DB_WRITE_ERROR" />
+  <bpmn:error id="Error_Notification" name="Notification failure" errorCode="NOTIFICATION_FAILURE" />
+  <bpmn:error id="Error_AllocationRecording" name="Allocation recording failed" errorCode="ALLOCATION_RECORDING_FAILED" />
+  <bpmn:process id="Process_StudentProjectApproval" name="Student Project Approval &amp; Allocation" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Department">
+      <bpmn:lane id="Lane_Student" name="Student / Team">
+        <bpmn:flowNodeRef>Start_TeamDecides</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_SubmitMerge1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_SubmitMerge2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Submit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_Deadline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_FlagTeam</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_LateRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_LateTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Lapsed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Revise</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_RevTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_RevLapsed</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Coordinator" name="Project Coordinator">
+        <bpmn:flowNodeRef>UT_LateDecide</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Late</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_LateRefused</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_FixEscalated</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Fixed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_InvalidData</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Screen</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_SimMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_SimReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_SimDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_RejectedDuplicate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_ManualMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_ManualAllocate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Arranged</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Waitlisted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_ManualRecord</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Committee" name="Review Committee (incl. HoD)">
+        <bpmn:flowNodeRef>GW_ReviewMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_Reminder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_Escalate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Reminder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_HoD</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_DecisionMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Decision</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Guide" name="Faculty Guide">
+        <bpmn:flowNodeRef>End_WithdrawnEarly</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_GuideRespond</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_WithdrawEarly</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_GuideTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Response</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_RetryMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Attempts</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_System" name="Project Management System">
+        <bpmn:flowNodeRef>ST_Validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_DataValid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_TeamMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>BRT_TeamRules</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Team</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_TeamViolation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_InvalidTeam</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Similarity</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_SimError</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Similar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_NewTopic</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Rejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_InviteMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_Invite</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_MatchMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>BRT_Match</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_GuideFound</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_GuideRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Exclude</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_RecordMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Reserve</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_Compensate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_ReleaseSlot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SP_Record</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_RecordError</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PostMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Await</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_WindowClosed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Allocated</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_Withdrawal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_CompWithdraw</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_RecordWithdrawal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Withdrawn</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_GuideUnavailable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_CompGuide</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_TeamDecides" name="Team decides to submit a proposal">
+      <bpmn:outgoing>Flow_01_TeamDecides_SubmitMerge1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="GW_SubmitMerge1">
+      <bpmn:incoming>Flow_01_TeamDecides_SubmitMerge1</bpmn:incoming>
+      <bpmn:incoming>Flow_07_DataValid_SubmitMerge1</bpmn:incoming>
+      <bpmn:incoming>Flow_41_Invite_SubmitMerge1</bpmn:incoming>
+      <bpmn:outgoing>Flow_02_SubmitMerge1_SubmitMerge2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_SubmitMerge2">
+      <bpmn:incoming>Flow_02_SubmitMerge1_SubmitMerge2</bpmn:incoming>
+      <bpmn:incoming>Flow_47_Late_SubmitMerge2</bpmn:incoming>
+      <bpmn:outgoing>Flow_03_SubmitMerge2_Submit</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_Submit" name="Prepare &amp; Submit Proposal">
+      <bpmn:documentation>Team fills in title, abstract, domain, roll numbers and team members in the Project Management System. Each completion increments submissionAttempts.</bpmn:documentation>
+      <bpmn:incoming>Flow_03_SubmitMerge2_Submit</bpmn:incoming>
+      <bpmn:outgoing>Flow_04_Submit_Validate</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_Deadline" name="Submission deadline reached" attachedToRef="UT_Submit">
+      <bpmn:outgoing>Flow_42_Deadline_FlagTeam</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_Deadline_def"><bpmn:timeDate xsi:type="bpmn:tFormalExpression">${submissionDeadline}</bpmn:timeDate></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:intermediateThrowEvent id="Ev_FlagTeam" name="Team flagged &amp; notified of missed deadline">
+      <bpmn:incoming>Flow_42_Deadline_FlagTeam</bpmn:incoming>
+      <bpmn:outgoing>Flow_43_FlagTeam_LateRequest</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_FlagTeam_def" messageRef="Msg_MissedDeadline" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:userTask id="UT_LateRequest" name="Submit Late-Submission Request">
+      <bpmn:incoming>Flow_43_FlagTeam_LateRequest</bpmn:incoming>
+      <bpmn:outgoing>Flow_44_LateRequest_LateDecide</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_LateTimer" name="3 days: no request" attachedToRef="UT_LateRequest">
+      <bpmn:outgoing>Flow_45_LateTimer_Lapsed</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_LateTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_Lapsed" name="Lapsed – deadline missed, no late request">
+      <bpmn:incoming>Flow_45_LateTimer_Lapsed</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Lapsed_def" messageRef="Msg_LapseNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_Revise" name="Revise &amp; Resubmit Proposal">
+      <bpmn:documentation>Team addresses the committee comments. Completion increments revisionCount.</bpmn:documentation>
+      <bpmn:incoming>Flow_34_Decision_Revise</bpmn:incoming>
+      <bpmn:outgoing>Flow_36_Revise_ReviewMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_RevTimer" name="7 days: no revision" attachedToRef="UT_Revise">
+      <bpmn:outgoing>Flow_37_RevTimer_RevLapsed</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_RevTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_RevLapsed" name="Lapsed – revision deadline missed">
+      <bpmn:incoming>Flow_37_RevTimer_RevLapsed</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_RevLapsed_def" messageRef="Msg_LapseNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_LateDecide" name="Decide Late-Submission Request">
+      <bpmn:incoming>Flow_44_LateRequest_LateDecide</bpmn:incoming>
+      <bpmn:outgoing>Flow_46_LateDecide_Late</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Late" name="Late submission approved?">
+      <bpmn:incoming>Flow_46_LateDecide_Late</bpmn:incoming>
+      <bpmn:outgoing>Flow_47_Late_SubmitMerge2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_48_Late_LateRefused</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_LateRefused" name="Lapsed – late submission refused">
+      <bpmn:incoming>Flow_48_Late_LateRefused</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_LateRefused_def" messageRef="Msg_LapseNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_FixEscalated" name="Resolve Escalated Proposal Errors">
+      <bpmn:documentation>Escalation target after two failed validation attempts. Coordinator works through the error list with the team.</bpmn:documentation>
+      <bpmn:incoming>Flow_08_DataValid_FixEscalated</bpmn:incoming>
+      <bpmn:outgoing>Flow_09_FixEscalated_Fixed</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Fixed" name="Errors resolved?">
+      <bpmn:incoming>Flow_09_FixEscalated_Fixed</bpmn:incoming>
+      <bpmn:outgoing>Flow_10_Fixed_TeamMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_11_Fixed_InvalidData</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_InvalidData" name="Closed – invalid proposal data">
+      <bpmn:incoming>Flow_11_Fixed_InvalidData</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_InvalidData_def" messageRef="Msg_ClosureNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_Screen" name="Screen Proposal">
+      <bpmn:documentation>Coordinator checks scope, domain tagging and format before the automated similarity check.</bpmn:documentation>
+      <bpmn:incoming>Flow_14_Team_Screen</bpmn:incoming>
+      <bpmn:outgoing>Flow_17_Screen_Similarity</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_SimMerge">
+      <bpmn:incoming>Flow_20_Similar_SimMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_21_SimError_SimMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_22_SimMerge_SimReview</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_SimReview" name="Review Similarity Match &amp; Record Outcome">
+      <bpmn:documentation>Coordinator inspects the similarity report (or checks originality manually if the service was down) and records the outcome in the system.</bpmn:documentation>
+      <bpmn:incoming>Flow_22_SimMerge_SimReview</bpmn:incoming>
+      <bpmn:outgoing>Flow_23_SimReview_SimDecision</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_SimDecision" name="Coordinator decision?">
+      <bpmn:incoming>Flow_23_SimReview_SimDecision</bpmn:incoming>
+      <bpmn:outgoing>Flow_24_SimDecision_ReviewMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_25_SimDecision_RejectedDuplicate</bpmn:outgoing>
+      <bpmn:outgoing>Flow_26_SimDecision_InviteMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_RejectedDuplicate" name="Rejected – duplicate / plagiarised topic">
+      <bpmn:incoming>Flow_25_SimDecision_RejectedDuplicate</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_RejectedDuplicate_def" messageRef="Msg_RejectionNotice" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="GW_ManualMerge">
+      <bpmn:incoming>Flow_52_GuideFound_ManualMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_62_Attempts_ManualMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_63_ManualMerge_ManualAllocate</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_ManualAllocate" name="Allocate Guide Manually">
+      <bpmn:documentation>Coordinator assigns a guide directly, appoints a co-guide or external guide, or places the team on the waiting list.</bpmn:documentation>
+      <bpmn:incoming>Flow_63_ManualMerge_ManualAllocate</bpmn:incoming>
+      <bpmn:outgoing>Flow_64_ManualAllocate_Arranged</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Arranged" name="Guide assigned?">
+      <bpmn:incoming>Flow_64_ManualAllocate_Arranged</bpmn:incoming>
+      <bpmn:outgoing>Flow_65_Arranged_RecordMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_66_Arranged_Waitlisted</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Waitlisted" name="Closed – team on guide waiting list">
+      <bpmn:incoming>Flow_66_Arranged_Waitlisted</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Waitlisted_def" messageRef="Msg_WaitlistNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_ManualRecord" name="Record Allocation &amp; Notify Parties Manually">
+      <bpmn:incoming>Flow_70_RecordError_ManualRecord</bpmn:incoming>
+      <bpmn:outgoing>Flow_71_ManualRecord_PostMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_ReviewMerge">
+      <bpmn:incoming>Flow_19_Similar_ReviewMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_24_SimDecision_ReviewMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_36_Revise_ReviewMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_27_ReviewMerge_Review</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_Review" name="Evaluate Proposal">
+      <bpmn:incoming>Flow_27_ReviewMerge_Review</bpmn:incoming>
+      <bpmn:outgoing>Flow_28_Review_DecisionMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_Reminder" name="5 days: no decision" cancelActivity="false" attachedToRef="UT_Review">
+      <bpmn:outgoing>Flow_29_Reminder_Reminder</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_Reminder_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P5D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="B_Escalate" name="10 days: still no decision" attachedToRef="UT_Review">
+      <bpmn:outgoing>Flow_30_Escalate_HoD</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_Escalate_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P10D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_Reminder" name="Reminder sent to committee">
+      <bpmn:incoming>Flow_29_Reminder_Reminder</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Reminder_def" messageRef="Msg_ReviewReminder" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_HoD" name="Decide Escalated Proposal (HoD)">
+      <bpmn:incoming>Flow_30_Escalate_HoD</bpmn:incoming>
+      <bpmn:outgoing>Flow_31_HoD_DecisionMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_DecisionMerge">
+      <bpmn:incoming>Flow_28_Review_DecisionMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_31_HoD_DecisionMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_32_DecisionMerge_Decision</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Decision" name="Committee decision?">
+      <bpmn:incoming>Flow_32_DecisionMerge_Decision</bpmn:incoming>
+      <bpmn:outgoing>Flow_33_Decision_MatchMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_34_Decision_Revise</bpmn:outgoing>
+      <bpmn:outgoing>Flow_35_Decision_NewTopic</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_WithdrawnEarly" name="Withdrawn – guide request cancelled">
+      <bpmn:incoming>Flow_58_WithdrawEarly_WithdrawnEarly</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_WithdrawnEarly_def" messageRef="Msg_WithdrawalConfirmation" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_GuideRespond" name="Accept or Decline Guide Request">
+      <bpmn:incoming>Flow_53_GuideRequest_GuideRespond</bpmn:incoming>
+      <bpmn:outgoing>Flow_54_GuideRespond_Response</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_WithdrawEarly" name="Team withdrawal received" attachedToRef="UT_GuideRespond">
+      <bpmn:outgoing>Flow_58_WithdrawEarly_WithdrawnEarly</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="B_WithdrawEarly_def" messageRef="Msg_Withdrawal" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="B_GuideTimer" name="No response in 5 days" attachedToRef="UT_GuideRespond">
+      <bpmn:outgoing>Flow_57_GuideTimer_RetryMerge</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_GuideTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P5D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_Response" name="Guide response?">
+      <bpmn:incoming>Flow_54_GuideRespond_Response</bpmn:incoming>
+      <bpmn:outgoing>Flow_55_Response_RecordMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_56_Response_RetryMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_RetryMerge">
+      <bpmn:incoming>Flow_56_Response_RetryMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_57_GuideTimer_RetryMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_59_RetryMerge_Attempts</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Attempts" name="Attempts &lt; 3?">
+      <bpmn:incoming>Flow_59_RetryMerge_Attempts</bpmn:incoming>
+      <bpmn:outgoing>Flow_60_Attempts_Exclude</bpmn:outgoing>
+      <bpmn:outgoing>Flow_62_Attempts_ManualMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ST_Validate" name="Validate Proposal Data">
+      <bpmn:documentation>Automated check of mandatory fields, abstract and roll-number format. Produces an error list.</bpmn:documentation>
+      <bpmn:incoming>Flow_04_Submit_Validate</bpmn:incoming>
+      <bpmn:outgoing>Flow_05_Validate_DataValid</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_DataValid" name="Data complete &amp; valid?">
+      <bpmn:incoming>Flow_05_Validate_DataValid</bpmn:incoming>
+      <bpmn:outgoing>Flow_06_DataValid_TeamMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_07_DataValid_SubmitMerge1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_08_DataValid_FixEscalated</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_TeamMerge">
+      <bpmn:incoming>Flow_06_DataValid_TeamMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_10_Fixed_TeamMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_12_TeamMerge_TeamRules</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:businessRuleTask id="BRT_TeamRules" name="Check Team Rules">
+      <bpmn:documentation>Decision table: team size within limit; no member already registered in another team.</bpmn:documentation>
+      <bpmn:incoming>Flow_12_TeamMerge_TeamRules</bpmn:incoming>
+      <bpmn:outgoing>Flow_13_TeamRules_Team</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="GW_Team" name="Team rules satisfied?">
+      <bpmn:incoming>Flow_13_TeamRules_Team</bpmn:incoming>
+      <bpmn:outgoing>Flow_14_Team_Screen</bpmn:outgoing>
+      <bpmn:outgoing>Flow_15_Team_TeamViolation</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="Send_TeamViolation" name="Notify Team of Rule Violation">
+      <bpmn:incoming>Flow_15_Team_TeamViolation</bpmn:incoming>
+      <bpmn:outgoing>Flow_16_TeamViolation_InvalidTeam</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="End_InvalidTeam" name="Invalid team">
+      <bpmn:incoming>Flow_16_TeamViolation_InvalidTeam</bpmn:incoming>
+      <bpmn:errorEventDefinition id="End_InvalidTeam_def" errorRef="Error_InvalidTeam" />
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ST_Similarity" name="Run Similarity / Duplicate-Topic Check">
+      <bpmn:incoming>Flow_17_Screen_Similarity</bpmn:incoming>
+      <bpmn:outgoing>Flow_18_Similarity_Similar</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="B_SimError" name="Similarity service unavailable" attachedToRef="ST_Similarity">
+      <bpmn:outgoing>Flow_21_SimError_SimMerge</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="B_SimError_def" errorRef="Error_SimilarityService" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_Similar" name="Similarity above threshold?">
+      <bpmn:incoming>Flow_18_Similarity_Similar</bpmn:incoming>
+      <bpmn:outgoing>Flow_19_Similar_ReviewMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_20_Similar_SimMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_NewTopic" name="New-topic submission still allowed?">
+      <bpmn:incoming>Flow_35_Decision_NewTopic</bpmn:incoming>
+      <bpmn:outgoing>Flow_38_NewTopic_Rejected</bpmn:outgoing>
+      <bpmn:outgoing>Flow_39_NewTopic_InviteMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Rejected" name="Rejected – reasons sent to team">
+      <bpmn:incoming>Flow_38_NewTopic_Rejected</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Rejected_def" messageRef="Msg_RejectionNotice" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="GW_InviteMerge">
+      <bpmn:incoming>Flow_26_SimDecision_InviteMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_39_NewTopic_InviteMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_40_InviteMerge_Invite</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="Send_Invite" name="Send Reasons &amp; Invite Topic Resubmission">
+      <bpmn:documentation>Sends committee / coordinator reasons, resets submissionAttempts and sets a new submissionDeadline (7 days).</bpmn:documentation>
+      <bpmn:incoming>Flow_40_InviteMerge_Invite</bpmn:incoming>
+      <bpmn:outgoing>Flow_41_Invite_SubmitMerge1</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="GW_MatchMerge">
+      <bpmn:incoming>Flow_33_Decision_MatchMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_61_Exclude_MatchMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_81_CompGuide_MatchMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_49_MatchMerge_Match</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:businessRuleTask id="BRT_Match" name="Match Guide by Domain &amp; Workload">
+      <bpmn:documentation>Decision table over domain match and current workload against the maximum load, ignoring excluded guides. Returns a guide or &quot;none&quot;.</bpmn:documentation>
+      <bpmn:incoming>Flow_49_MatchMerge_Match</bpmn:incoming>
+      <bpmn:outgoing>Flow_50_Match_GuideFound</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="GW_GuideFound" name="Eligible guide found?">
+      <bpmn:incoming>Flow_50_Match_GuideFound</bpmn:incoming>
+      <bpmn:outgoing>Flow_51_GuideFound_GuideRequest</bpmn:outgoing>
+      <bpmn:outgoing>Flow_52_GuideFound_ManualMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="Send_GuideRequest" name="Send Allocation Request to Guide">
+      <bpmn:incoming>Flow_51_GuideFound_GuideRequest</bpmn:incoming>
+      <bpmn:outgoing>Flow_53_GuideRequest_GuideRespond</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:serviceTask id="ST_Exclude" name="Exclude Guide &amp; Count Attempt">
+      <bpmn:incoming>Flow_60_Attempts_Exclude</bpmn:incoming>
+      <bpmn:outgoing>Flow_61_Exclude_MatchMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_RecordMerge">
+      <bpmn:incoming>Flow_55_Response_RecordMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_65_Arranged_RecordMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_67_RecordMerge_Reserve</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ST_Reserve" name="Allocate Guide &amp; Reserve Slot">
+      <bpmn:documentation>Commits the allocation and consumes one unit of the guide workload. Compensated by &quot;Release Guide Slot&quot;.</bpmn:documentation>
+      <bpmn:incoming>Flow_67_RecordMerge_Reserve</bpmn:incoming>
+      <bpmn:outgoing>Flow_68_Reserve_Record</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="B_Compensate" name="Undo allocation" attachedToRef="ST_Reserve">
+      <bpmn:compensateEventDefinition id="B_Compensate_def" />
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="ST_ReleaseSlot" name="Release Guide Slot" isForCompensation="true" />
+    <bpmn:subProcess id="SP_Record" name="Record Allocation &amp; Notify Parties">
+      <bpmn:incoming>Flow_68_Reserve_Record</bpmn:incoming>
+      <bpmn:outgoing>Flow_69_Record_PostMerge</bpmn:outgoing>
+      <bpmn:startEvent id="SP_Start" name="Allocation committed">
+        <bpmn:outgoing>Flow_82_Start_MergeDb</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:exclusiveGateway id="SP_MergeDb">
+        <bpmn:incoming>Flow_82_Start_MergeDb</bpmn:incoming>
+        <bpmn:incoming>Flow_87_WaitDb_MergeDb</bpmn:incoming>
+        <bpmn:outgoing>Flow_83_MergeDb_WriteDb</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:serviceTask id="SP_WriteDb" name="Write Allocation Record">
+        <bpmn:incoming>Flow_83_MergeDb_WriteDb</bpmn:incoming>
+        <bpmn:outgoing>Flow_84_WriteDb_Split</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:boundaryEvent id="SP_B_DbError" name="Database write error" attachedToRef="SP_WriteDb">
+        <bpmn:outgoing>Flow_85_B_DbError_GwDbRetry</bpmn:outgoing>
+        <bpmn:errorEventDefinition id="SP_B_DbError_def" errorRef="Error_DatabaseWrite" />
+      </bpmn:boundaryEvent>
+      <bpmn:exclusiveGateway id="SP_GwDbRetry" name="DB retries &lt; 3?">
+        <bpmn:incoming>Flow_85_B_DbError_GwDbRetry</bpmn:incoming>
+        <bpmn:outgoing>Flow_86_GwDbRetry_WaitDb</bpmn:outgoing>
+        <bpmn:outgoing>Flow_88_GwDbRetry_ErrDb</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:intermediateCatchEvent id="SP_WaitDb" name="Wait 5 min">
+        <bpmn:incoming>Flow_86_GwDbRetry_WaitDb</bpmn:incoming>
+        <bpmn:outgoing>Flow_87_WaitDb_MergeDb</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="SP_WaitDb_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration></bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:endEvent id="SP_ErrDb" name="Recording failed">
+        <bpmn:incoming>Flow_88_GwDbRetry_ErrDb</bpmn:incoming>
+        <bpmn:errorEventDefinition id="SP_ErrDb_def" errorRef="Error_AllocationRecording" />
+      </bpmn:endEvent>
+      <bpmn:parallelGateway id="SP_Split">
+        <bpmn:incoming>Flow_84_WriteDb_Split</bpmn:incoming>
+        <bpmn:outgoing>Flow_89_Split_MergeTeam</bpmn:outgoing>
+        <bpmn:outgoing>Flow_96_Split_MergeGuide</bpmn:outgoing>
+      </bpmn:parallelGateway>
+      <bpmn:exclusiveGateway id="SP_MergeTeam">
+        <bpmn:incoming>Flow_89_Split_MergeTeam</bpmn:incoming>
+        <bpmn:incoming>Flow_94_WaitTeam_MergeTeam</bpmn:incoming>
+        <bpmn:outgoing>Flow_90_MergeTeam_NotifyTeam</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sendTask id="SP_NotifyTeam" name="Notify Student Team">
+        <bpmn:incoming>Flow_90_MergeTeam_NotifyTeam</bpmn:incoming>
+        <bpmn:outgoing>Flow_91_NotifyTeam_Join</bpmn:outgoing>
+      </bpmn:sendTask>
+      <bpmn:boundaryEvent id="SP_B_TeamError" name="Notification failure" attachedToRef="SP_NotifyTeam">
+        <bpmn:outgoing>Flow_92_B_TeamError_GwTeamRetry</bpmn:outgoing>
+        <bpmn:errorEventDefinition id="SP_B_TeamError_def" errorRef="Error_Notification" />
+      </bpmn:boundaryEvent>
+      <bpmn:exclusiveGateway id="SP_GwTeamRetry" name="Retries &lt; 3?">
+        <bpmn:incoming>Flow_92_B_TeamError_GwTeamRetry</bpmn:incoming>
+        <bpmn:outgoing>Flow_93_GwTeamRetry_WaitTeam</bpmn:outgoing>
+        <bpmn:outgoing>Flow_95_GwTeamRetry_ErrTeam</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:intermediateCatchEvent id="SP_WaitTeam" name="Wait 5 min">
+        <bpmn:incoming>Flow_93_GwTeamRetry_WaitTeam</bpmn:incoming>
+        <bpmn:outgoing>Flow_94_WaitTeam_MergeTeam</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="SP_WaitTeam_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration></bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:endEvent id="SP_ErrTeam" name="Team notification failed">
+        <bpmn:incoming>Flow_95_GwTeamRetry_ErrTeam</bpmn:incoming>
+        <bpmn:errorEventDefinition id="SP_ErrTeam_def" errorRef="Error_AllocationRecording" />
+      </bpmn:endEvent>
+      <bpmn:exclusiveGateway id="SP_MergeGuide">
+        <bpmn:incoming>Flow_96_Split_MergeGuide</bpmn:incoming>
+        <bpmn:incoming>Flow_101_WaitGuide_MergeGuide</bpmn:incoming>
+        <bpmn:outgoing>Flow_97_MergeGuide_NotifyGuide</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sendTask id="SP_NotifyGuide" name="Notify Faculty Guide">
+        <bpmn:incoming>Flow_97_MergeGuide_NotifyGuide</bpmn:incoming>
+        <bpmn:outgoing>Flow_98_NotifyGuide_Join</bpmn:outgoing>
+      </bpmn:sendTask>
+      <bpmn:boundaryEvent id="SP_B_GuideError" name="Notification failure" attachedToRef="SP_NotifyGuide">
+        <bpmn:outgoing>Flow_99_B_GuideError_GwGuideRetry</bpmn:outgoing>
+        <bpmn:errorEventDefinition id="SP_B_GuideError_def" errorRef="Error_Notification" />
+      </bpmn:boundaryEvent>
+      <bpmn:exclusiveGateway id="SP_GwGuideRetry" name="Retries &lt; 3?">
+        <bpmn:incoming>Flow_99_B_GuideError_GwGuideRetry</bpmn:incoming>
+        <bpmn:outgoing>Flow_100_GwGuideRetry_WaitGuide</bpmn:outgoing>
+        <bpmn:outgoing>Flow_102_GwGuideRetry_ErrGuide</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:intermediateCatchEvent id="SP_WaitGuide" name="Wait 5 min">
+        <bpmn:incoming>Flow_100_GwGuideRetry_WaitGuide</bpmn:incoming>
+        <bpmn:outgoing>Flow_101_WaitGuide_MergeGuide</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="SP_WaitGuide_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration></bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:endEvent id="SP_ErrGuide" name="Guide notification failed">
+        <bpmn:incoming>Flow_102_GwGuideRetry_ErrGuide</bpmn:incoming>
+        <bpmn:errorEventDefinition id="SP_ErrGuide_def" errorRef="Error_AllocationRecording" />
+      </bpmn:endEvent>
+      <bpmn:parallelGateway id="SP_Join">
+        <bpmn:incoming>Flow_91_NotifyTeam_Join</bpmn:incoming>
+        <bpmn:incoming>Flow_98_NotifyGuide_Join</bpmn:incoming>
+        <bpmn:outgoing>Flow_103_Join_End</bpmn:outgoing>
+      </bpmn:parallelGateway>
+      <bpmn:endEvent id="SP_End" name="Allocation recorded &amp; parties notified">
+        <bpmn:incoming>Flow_103_Join_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_82_Start_MergeDb" sourceRef="SP_Start" targetRef="SP_MergeDb" />
+      <bpmn:sequenceFlow id="Flow_83_MergeDb_WriteDb" sourceRef="SP_MergeDb" targetRef="SP_WriteDb" />
+      <bpmn:sequenceFlow id="Flow_84_WriteDb_Split" sourceRef="SP_WriteDb" targetRef="SP_Split" />
+      <bpmn:sequenceFlow id="Flow_85_B_DbError_GwDbRetry" sourceRef="SP_B_DbError" targetRef="SP_GwDbRetry" />
+      <bpmn:sequenceFlow id="Flow_86_GwDbRetry_WaitDb" name="Yes" sourceRef="SP_GwDbRetry" targetRef="SP_WaitDb">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${dbRetries &lt; 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_87_WaitDb_MergeDb" sourceRef="SP_WaitDb" targetRef="SP_MergeDb" />
+      <bpmn:sequenceFlow id="Flow_88_GwDbRetry_ErrDb" name="No" sourceRef="SP_GwDbRetry" targetRef="SP_ErrDb">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${dbRetries &gt;= 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_89_Split_MergeTeam" sourceRef="SP_Split" targetRef="SP_MergeTeam" />
+      <bpmn:sequenceFlow id="Flow_90_MergeTeam_NotifyTeam" sourceRef="SP_MergeTeam" targetRef="SP_NotifyTeam" />
+      <bpmn:sequenceFlow id="Flow_91_NotifyTeam_Join" sourceRef="SP_NotifyTeam" targetRef="SP_Join" />
+      <bpmn:sequenceFlow id="Flow_92_B_TeamError_GwTeamRetry" sourceRef="SP_B_TeamError" targetRef="SP_GwTeamRetry" />
+      <bpmn:sequenceFlow id="Flow_93_GwTeamRetry_WaitTeam" name="Yes" sourceRef="SP_GwTeamRetry" targetRef="SP_WaitTeam">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${teamNotifyRetries &lt; 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_94_WaitTeam_MergeTeam" sourceRef="SP_WaitTeam" targetRef="SP_MergeTeam" />
+      <bpmn:sequenceFlow id="Flow_95_GwTeamRetry_ErrTeam" name="No" sourceRef="SP_GwTeamRetry" targetRef="SP_ErrTeam">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${teamNotifyRetries &gt;= 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_96_Split_MergeGuide" sourceRef="SP_Split" targetRef="SP_MergeGuide" />
+      <bpmn:sequenceFlow id="Flow_97_MergeGuide_NotifyGuide" sourceRef="SP_MergeGuide" targetRef="SP_NotifyGuide" />
+      <bpmn:sequenceFlow id="Flow_98_NotifyGuide_Join" sourceRef="SP_NotifyGuide" targetRef="SP_Join" />
+      <bpmn:sequenceFlow id="Flow_99_B_GuideError_GwGuideRetry" sourceRef="SP_B_GuideError" targetRef="SP_GwGuideRetry" />
+      <bpmn:sequenceFlow id="Flow_100_GwGuideRetry_WaitGuide" name="Yes" sourceRef="SP_GwGuideRetry" targetRef="SP_WaitGuide">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guideNotifyRetries &lt; 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_101_WaitGuide_MergeGuide" sourceRef="SP_WaitGuide" targetRef="SP_MergeGuide" />
+      <bpmn:sequenceFlow id="Flow_102_GwGuideRetry_ErrGuide" name="No" sourceRef="SP_GwGuideRetry" targetRef="SP_ErrGuide">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guideNotifyRetries &gt;= 3}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_103_Join_End" sourceRef="SP_Join" targetRef="SP_End" />
+    </bpmn:subProcess>
+    <bpmn:boundaryEvent id="B_RecordError" name="Retries exhausted" attachedToRef="SP_Record">
+      <bpmn:outgoing>Flow_70_RecordError_ManualRecord</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="B_RecordError_def" errorRef="Error_AllocationRecording" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_PostMerge">
+      <bpmn:incoming>Flow_69_Record_PostMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_71_ManualRecord_PostMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_72_PostMerge_Await</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:eventBasedGateway id="GW_Await" name="Await confirmation window">
+      <bpmn:incoming>Flow_72_PostMerge_Await</bpmn:incoming>
+      <bpmn:outgoing>Flow_73_Await_WindowClosed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_74_Await_Withdrawal</bpmn:outgoing>
+      <bpmn:outgoing>Flow_75_Await_GuideUnavailable</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Ev_WindowClosed" name="7-day confirmation window closed">
+      <bpmn:incoming>Flow_73_Await_WindowClosed</bpmn:incoming>
+      <bpmn:outgoing>Flow_76_WindowClosed_Allocated</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="Ev_WindowClosed_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="End_Allocated" name="Project allocated &amp; confirmed">
+      <bpmn:incoming>Flow_76_WindowClosed_Allocated</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="Ev_Withdrawal" name="Team withdrawal received">
+      <bpmn:incoming>Flow_74_Await_Withdrawal</bpmn:incoming>
+      <bpmn:outgoing>Flow_77_Withdrawal_CompWithdraw</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Withdrawal_def" messageRef="Msg_Withdrawal" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Ev_CompWithdraw" name="Release guide slot">
+      <bpmn:incoming>Flow_77_Withdrawal_CompWithdraw</bpmn:incoming>
+      <bpmn:outgoing>Flow_78_CompWithdraw_RecordWithdrawal</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="Ev_CompWithdraw_def" activityRef="ST_Reserve" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:serviceTask id="ST_RecordWithdrawal" name="Record Withdrawal &amp; Close Project">
+      <bpmn:incoming>Flow_78_CompWithdraw_RecordWithdrawal</bpmn:incoming>
+      <bpmn:outgoing>Flow_79_RecordWithdrawal_Withdrawn</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Withdrawn" name="Withdrawn – guide slot released">
+      <bpmn:incoming>Flow_79_RecordWithdrawal_Withdrawn</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Withdrawn_def" messageRef="Msg_WithdrawalConfirmation" />
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="Ev_GuideUnavailable" name="Guide unavailable">
+      <bpmn:incoming>Flow_75_Await_GuideUnavailable</bpmn:incoming>
+      <bpmn:outgoing>Flow_80_GuideUnavailable_CompGuide</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_GuideUnavailable_def" messageRef="Msg_GuideUnavailable" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Ev_CompGuide" name="Release guide slot">
+      <bpmn:incoming>Flow_80_GuideUnavailable_CompGuide</bpmn:incoming>
+      <bpmn:outgoing>Flow_81_CompGuide_MatchMerge</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="Ev_CompGuide_def" activityRef="ST_Reserve" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_01_TeamDecides_SubmitMerge1" sourceRef="Start_TeamDecides" targetRef="GW_SubmitMerge1" />
+    <bpmn:sequenceFlow id="Flow_02_SubmitMerge1_SubmitMerge2" sourceRef="GW_SubmitMerge1" targetRef="GW_SubmitMerge2" />
+    <bpmn:sequenceFlow id="Flow_03_SubmitMerge2_Submit" sourceRef="GW_SubmitMerge2" targetRef="UT_Submit" />
+    <bpmn:sequenceFlow id="Flow_04_Submit_Validate" sourceRef="UT_Submit" targetRef="ST_Validate" />
+    <bpmn:sequenceFlow id="Flow_05_Validate_DataValid" sourceRef="ST_Validate" targetRef="GW_DataValid" />
+    <bpmn:sequenceFlow id="Flow_06_DataValid_TeamMerge" name="Yes" sourceRef="GW_DataValid" targetRef="GW_TeamMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${dataValid}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_07_DataValid_SubmitMerge1" name="No – return error list (attempts &lt; 2)" sourceRef="GW_DataValid" targetRef="GW_SubmitMerge1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!dataValid &amp;&amp; submissionAttempts &lt; 2}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_08_DataValid_FixEscalated" name="No – 2 attempts used: escalate" sourceRef="GW_DataValid" targetRef="UT_FixEscalated">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!dataValid &amp;&amp; submissionAttempts &gt;= 2}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_09_FixEscalated_Fixed" sourceRef="UT_FixEscalated" targetRef="GW_Fixed" />
+    <bpmn:sequenceFlow id="Flow_10_Fixed_TeamMerge" name="Yes" sourceRef="GW_Fixed" targetRef="GW_TeamMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${errorsResolved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_11_Fixed_InvalidData" name="No" sourceRef="GW_Fixed" targetRef="End_InvalidData">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!errorsResolved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_12_TeamMerge_TeamRules" sourceRef="GW_TeamMerge" targetRef="BRT_TeamRules" />
+    <bpmn:sequenceFlow id="Flow_13_TeamRules_Team" sourceRef="BRT_TeamRules" targetRef="GW_Team" />
+    <bpmn:sequenceFlow id="Flow_14_Team_Screen" name="Yes" sourceRef="GW_Team" targetRef="UT_Screen">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${teamValid}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_15_Team_TeamViolation" name="No – size limit / member in another team" sourceRef="GW_Team" targetRef="Send_TeamViolation">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!teamValid}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_16_TeamViolation_InvalidTeam" sourceRef="Send_TeamViolation" targetRef="End_InvalidTeam" />
+    <bpmn:sequenceFlow id="Flow_17_Screen_Similarity" sourceRef="UT_Screen" targetRef="ST_Similarity" />
+    <bpmn:sequenceFlow id="Flow_18_Similarity_Similar" sourceRef="ST_Similarity" targetRef="GW_Similar" />
+    <bpmn:sequenceFlow id="Flow_19_Similar_ReviewMerge" name="No" sourceRef="GW_Similar" targetRef="GW_ReviewMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${similarityScore &lt;= threshold}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_20_Similar_SimMerge" name="Yes" sourceRef="GW_Similar" targetRef="GW_SimMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${similarityScore &gt; threshold}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_21_SimError_SimMerge" sourceRef="B_SimError" targetRef="GW_SimMerge" />
+    <bpmn:sequenceFlow id="Flow_22_SimMerge_SimReview" sourceRef="GW_SimMerge" targetRef="UT_SimReview" />
+    <bpmn:sequenceFlow id="Flow_23_SimReview_SimDecision" sourceRef="UT_SimReview" targetRef="GW_SimDecision" />
+    <bpmn:sequenceFlow id="Flow_24_SimDecision_ReviewMerge" name="Cleared" sourceRef="GW_SimDecision" targetRef="GW_ReviewMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${simOutcome == 'cleared'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_25_SimDecision_RejectedDuplicate" name="Reject (or topic already modified once)" sourceRef="GW_SimDecision" targetRef="End_RejectedDuplicate">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${simOutcome == 'reject' || (simOutcome == 'modify' &amp;&amp; topicModifications &gt;= 1)}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_26_SimDecision_InviteMerge" name="Modify topic (first time)" sourceRef="GW_SimDecision" targetRef="GW_InviteMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${simOutcome == 'modify' &amp;&amp; topicModifications &lt; 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_27_ReviewMerge_Review" sourceRef="GW_ReviewMerge" targetRef="UT_Review" />
+    <bpmn:sequenceFlow id="Flow_28_Review_DecisionMerge" sourceRef="UT_Review" targetRef="GW_DecisionMerge" />
+    <bpmn:sequenceFlow id="Flow_29_Reminder_Reminder" sourceRef="B_Reminder" targetRef="End_Reminder" />
+    <bpmn:sequenceFlow id="Flow_30_Escalate_HoD" sourceRef="B_Escalate" targetRef="UT_HoD" />
+    <bpmn:sequenceFlow id="Flow_31_HoD_DecisionMerge" sourceRef="UT_HoD" targetRef="GW_DecisionMerge" />
+    <bpmn:sequenceFlow id="Flow_32_DecisionMerge_Decision" sourceRef="GW_DecisionMerge" targetRef="GW_Decision" />
+    <bpmn:sequenceFlow id="Flow_33_Decision_MatchMerge" name="Approved" sourceRef="GW_Decision" targetRef="GW_MatchMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${decision == 'approve'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_34_Decision_Revise" name="Revision requested (cycles &lt; 2)" sourceRef="GW_Decision" targetRef="UT_Revise">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${decision == 'revise' &amp;&amp; revisionCount &lt; 2}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_35_Decision_NewTopic" name="Rejected (or 2 revision cycles used)" sourceRef="GW_Decision" targetRef="GW_NewTopic">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${decision == 'reject' || (decision == 'revise' &amp;&amp; revisionCount &gt;= 2)}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_36_Revise_ReviewMerge" sourceRef="UT_Revise" targetRef="GW_ReviewMerge" />
+    <bpmn:sequenceFlow id="Flow_37_RevTimer_RevLapsed" sourceRef="B_RevTimer" targetRef="End_RevLapsed" />
+    <bpmn:sequenceFlow id="Flow_38_NewTopic_Rejected" name="No" sourceRef="GW_NewTopic" targetRef="End_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${newTopicSubmissions &gt;= 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_39_NewTopic_InviteMerge" name="Yes – one new topic" sourceRef="GW_NewTopic" targetRef="GW_InviteMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${newTopicSubmissions &lt; 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_40_InviteMerge_Invite" sourceRef="GW_InviteMerge" targetRef="Send_Invite" />
+    <bpmn:sequenceFlow id="Flow_41_Invite_SubmitMerge1" sourceRef="Send_Invite" targetRef="GW_SubmitMerge1" />
+    <bpmn:sequenceFlow id="Flow_42_Deadline_FlagTeam" sourceRef="B_Deadline" targetRef="Ev_FlagTeam" />
+    <bpmn:sequenceFlow id="Flow_43_FlagTeam_LateRequest" sourceRef="Ev_FlagTeam" targetRef="UT_LateRequest" />
+    <bpmn:sequenceFlow id="Flow_44_LateRequest_LateDecide" sourceRef="UT_LateRequest" targetRef="UT_LateDecide" />
+    <bpmn:sequenceFlow id="Flow_45_LateTimer_Lapsed" sourceRef="B_LateTimer" targetRef="End_Lapsed" />
+    <bpmn:sequenceFlow id="Flow_46_LateDecide_Late" sourceRef="UT_LateDecide" targetRef="GW_Late" />
+    <bpmn:sequenceFlow id="Flow_47_Late_SubmitMerge2" name="Approved (one extension only)" sourceRef="GW_Late" targetRef="GW_SubmitMerge2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${lateApproved &amp;&amp; extensionsGranted &lt; 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_48_Late_LateRefused" name="Refused" sourceRef="GW_Late" targetRef="End_LateRefused">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!lateApproved || extensionsGranted &gt;= 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_49_MatchMerge_Match" sourceRef="GW_MatchMerge" targetRef="BRT_Match" />
+    <bpmn:sequenceFlow id="Flow_50_Match_GuideFound" sourceRef="BRT_Match" targetRef="GW_GuideFound" />
+    <bpmn:sequenceFlow id="Flow_51_GuideFound_GuideRequest" name="Yes" sourceRef="GW_GuideFound" targetRef="Send_GuideRequest">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guide != 'none'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_52_GuideFound_ManualMerge" name="No – &quot;none&quot; (domain mismatch / max load)" sourceRef="GW_GuideFound" targetRef="GW_ManualMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guide == 'none'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_53_GuideRequest_GuideRespond" sourceRef="Send_GuideRequest" targetRef="UT_GuideRespond" />
+    <bpmn:sequenceFlow id="Flow_54_GuideRespond_Response" sourceRef="UT_GuideRespond" targetRef="GW_Response" />
+    <bpmn:sequenceFlow id="Flow_55_Response_RecordMerge" name="Accepted" sourceRef="GW_Response" targetRef="GW_RecordMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guideAccepted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_56_Response_RetryMerge" name="Declined" sourceRef="GW_Response" targetRef="GW_RetryMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!guideAccepted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_57_GuideTimer_RetryMerge" sourceRef="B_GuideTimer" targetRef="GW_RetryMerge" />
+    <bpmn:sequenceFlow id="Flow_58_WithdrawEarly_WithdrawnEarly" sourceRef="B_WithdrawEarly" targetRef="End_WithdrawnEarly" />
+    <bpmn:sequenceFlow id="Flow_59_RetryMerge_Attempts" sourceRef="GW_RetryMerge" targetRef="GW_Attempts" />
+    <bpmn:sequenceFlow id="Flow_60_Attempts_Exclude" name="Yes – try next guide" sourceRef="GW_Attempts" targetRef="ST_Exclude">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${allocationAttempts &lt; 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_61_Exclude_MatchMerge" sourceRef="ST_Exclude" targetRef="GW_MatchMerge" />
+    <bpmn:sequenceFlow id="Flow_62_Attempts_ManualMerge" name="No – 3 attempts used" sourceRef="GW_Attempts" targetRef="GW_ManualMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${allocationAttempts &gt;= 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_63_ManualMerge_ManualAllocate" sourceRef="GW_ManualMerge" targetRef="UT_ManualAllocate" />
+    <bpmn:sequenceFlow id="Flow_64_ManualAllocate_Arranged" sourceRef="UT_ManualAllocate" targetRef="GW_Arranged" />
+    <bpmn:sequenceFlow id="Flow_65_Arranged_RecordMerge" name="Yes – manual / co-guide / external" sourceRef="GW_Arranged" targetRef="GW_RecordMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${guideAssigned}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_66_Arranged_Waitlisted" name="No – waiting list" sourceRef="GW_Arranged" targetRef="End_Waitlisted">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!guideAssigned}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_67_RecordMerge_Reserve" sourceRef="GW_RecordMerge" targetRef="ST_Reserve" />
+    <bpmn:sequenceFlow id="Flow_68_Reserve_Record" sourceRef="ST_Reserve" targetRef="SP_Record" />
+    <bpmn:sequenceFlow id="Flow_69_Record_PostMerge" sourceRef="SP_Record" targetRef="GW_PostMerge" />
+    <bpmn:sequenceFlow id="Flow_70_RecordError_ManualRecord" sourceRef="B_RecordError" targetRef="UT_ManualRecord" />
+    <bpmn:sequenceFlow id="Flow_71_ManualRecord_PostMerge" sourceRef="UT_ManualRecord" targetRef="GW_PostMerge" />
+    <bpmn:sequenceFlow id="Flow_72_PostMerge_Await" sourceRef="GW_PostMerge" targetRef="GW_Await" />
+    <bpmn:sequenceFlow id="Flow_73_Await_WindowClosed" sourceRef="GW_Await" targetRef="Ev_WindowClosed" />
+    <bpmn:sequenceFlow id="Flow_74_Await_Withdrawal" sourceRef="GW_Await" targetRef="Ev_Withdrawal" />
+    <bpmn:sequenceFlow id="Flow_75_Await_GuideUnavailable" sourceRef="GW_Await" targetRef="Ev_GuideUnavailable" />
+    <bpmn:sequenceFlow id="Flow_76_WindowClosed_Allocated" sourceRef="Ev_WindowClosed" targetRef="End_Allocated" />
+    <bpmn:sequenceFlow id="Flow_77_Withdrawal_CompWithdraw" sourceRef="Ev_Withdrawal" targetRef="Ev_CompWithdraw" />
+    <bpmn:sequenceFlow id="Flow_78_CompWithdraw_RecordWithdrawal" sourceRef="Ev_CompWithdraw" targetRef="ST_RecordWithdrawal" />
+    <bpmn:sequenceFlow id="Flow_79_RecordWithdrawal_Withdrawn" sourceRef="ST_RecordWithdrawal" targetRef="End_Withdrawn" />
+    <bpmn:sequenceFlow id="Flow_80_GuideUnavailable_CompGuide" sourceRef="Ev_GuideUnavailable" targetRef="Ev_CompGuide" />
+    <bpmn:sequenceFlow id="Flow_81_CompGuide_MatchMerge" sourceRef="Ev_CompGuide" targetRef="GW_MatchMerge" />
+    <bpmn:association id="Association_Compensation" associationDirection="One" sourceRef="B_Compensate" targetRef="ST_ReleaseSlot" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Main" name="Student Project Approval &amp; Allocation">
+    <bpmndi:BPMNPlane id="BPMNPlane_Main" bpmnElement="Collaboration_ProjectApproval">
+      <bpmndi:BPMNShape id="Participant_Department_di" bpmnElement="Participant_Department" isHorizontal="true"><dc:Bounds x="160" y="80" width="5480" height="1610" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Student_di" bpmnElement="Lane_Student" isHorizontal="true"><dc:Bounds x="190" y="80" width="5450" height="310" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Coordinator_di" bpmnElement="Lane_Coordinator" isHorizontal="true"><dc:Bounds x="190" y="390" width="5450" height="250" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Committee_di" bpmnElement="Lane_Committee" isHorizontal="true"><dc:Bounds x="190" y="640" width="5450" height="285" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Guide_di" bpmnElement="Lane_Guide" isHorizontal="true"><dc:Bounds x="190" y="925" width="5450" height="285" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_System_di" bpmnElement="Lane_System" isHorizontal="true"><dc:Bounds x="190" y="1210" width="5450" height="480" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_TeamDecides_di" bpmnElement="Start_TeamDecides"><dc:Bounds x="282" y="177" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="248" y="218" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SubmitMerge1_di" bpmnElement="GW_SubmitMerge1" isMarkerVisible="true"><dc:Bounds x="425" y="170" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SubmitMerge2_di" bpmnElement="GW_SubmitMerge2" isMarkerVisible="true"><dc:Bounds x="575" y="170" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Submit_di" bpmnElement="UT_Submit"><dc:Bounds x="700" y="155" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_Deadline_di" bpmnElement="B_Deadline"><dc:Bounds x="762" y="217" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="792" y="251" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_FlagTeam_di" bpmnElement="Ev_FlagTeam"><dc:Bounds x="882" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="848" y="333" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_LateRequest_di" bpmnElement="UT_LateRequest"><dc:Bounds x="1000" y="270" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_LateTimer_di" bpmnElement="B_LateTimer"><dc:Bounds x="1062" y="252" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="964" y="227" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Lapsed_di" bpmnElement="End_Lapsed"><dc:Bounds x="1182" y="177" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1224" y="169" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Revise_di" bpmnElement="UT_Revise"><dc:Bounds x="2800" y="155" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_RevTimer_di" bpmnElement="B_RevTimer"><dc:Bounds x="2867" y="217" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2897" y="251" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_RevLapsed_di" bpmnElement="End_RevLapsed"><dc:Bounds x="2982" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2948" y="333" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_LateDecide_di" bpmnElement="UT_LateDecide"><dc:Bounds x="1150" y="415" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Late_di" bpmnElement="GW_Late" isMarkerVisible="true"><dc:Bounds x="1325" y="430" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1298" y="485" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_LateRefused_di" bpmnElement="End_LateRefused"><dc:Bounds x="1482" y="437" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1448" y="478" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_FixEscalated_di" bpmnElement="UT_FixEscalated"><dc:Bounds x="1000" y="535" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Fixed_di" bpmnElement="GW_Fixed" isMarkerVisible="true"><dc:Bounds x="1175" y="550" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1212" y="525" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_InvalidData_di" bpmnElement="End_InvalidData"><dc:Bounds x="1332" y="557" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1298" y="598" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Screen_di" bpmnElement="UT_Screen"><dc:Bounds x="1600" y="535" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SimMerge_di" bpmnElement="GW_SimMerge" isMarkerVisible="true"><dc:Bounds x="1925" y="550" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_SimReview_di" bpmnElement="UT_SimReview"><dc:Bounds x="2050" y="535" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SimDecision_di" bpmnElement="GW_SimDecision" isMarkerVisible="true"><dc:Bounds x="2225" y="550" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2134" y="598" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_RejectedDuplicate_di" bpmnElement="End_RejectedDuplicate"><dc:Bounds x="2232" y="437" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2122" y="429" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_ManualMerge_di" bpmnElement="GW_ManualMerge" isMarkerVisible="true"><dc:Bounds x="4025" y="550" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_ManualAllocate_di" bpmnElement="UT_ManualAllocate"><dc:Bounds x="4150" y="535" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Arranged_di" bpmnElement="GW_Arranged" isMarkerVisible="true"><dc:Bounds x="4325" y="550" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="4362" y="525" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Waitlisted_di" bpmnElement="End_Waitlisted"><dc:Bounds x="4482" y="557" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4448" y="598" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_ManualRecord_di" bpmnElement="UT_ManualRecord"><dc:Bounds x="4750" y="535" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_ReviewMerge_di" bpmnElement="GW_ReviewMerge" isMarkerVisible="true"><dc:Bounds x="2375" y="685" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Review_di" bpmnElement="UT_Review"><dc:Bounds x="2500" y="670" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_Reminder_di" bpmnElement="B_Reminder"><dc:Bounds x="2502" y="732" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2404" y="766" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_Escalate_di" bpmnElement="B_Escalate"><dc:Bounds x="2562" y="732" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2592" y="766" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Reminder_di" bpmnElement="End_Reminder"><dc:Bounds x="2502" y="832" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2468" y="873" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_HoD_di" bpmnElement="UT_HoD"><dc:Bounds x="2650" y="810" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_DecisionMerge_di" bpmnElement="GW_DecisionMerge" isMarkerVisible="true"><dc:Bounds x="2675" y="685" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Decision_di" bpmnElement="GW_Decision" isMarkerVisible="true"><dc:Bounds x="2825" y="685" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2734" y="660" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_WithdrawnEarly_di" bpmnElement="End_WithdrawnEarly"><dc:Bounds x="3582" y="947" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3472" y="945" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_GuideRespond_di" bpmnElement="UT_GuideRespond"><dc:Bounds x="3700" y="1020" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_WithdrawEarly_di" bpmnElement="B_WithdrawEarly"><dc:Bounds x="3762" y="1002" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3792" y="964" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_GuideTimer_di" bpmnElement="B_GuideTimer"><dc:Bounds x="3762" y="1082" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3792" y="1116" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Response_di" bpmnElement="GW_Response" isMarkerVisible="true"><dc:Bounds x="3875" y="1035" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3848" y="1003" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_RetryMerge_di" bpmnElement="GW_RetryMerge" isMarkerVisible="true"><dc:Bounds x="3875" y="1135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Attempts_di" bpmnElement="GW_Attempts" isMarkerVisible="true"><dc:Bounds x="4025" y="1135" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="4081" y="1147" width="91" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Validate_di" bpmnElement="ST_Validate"><dc:Bounds x="700" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_DataValid_di" bpmnElement="GW_DataValid" isMarkerVisible="true"><dc:Bounds x="875" y="1350" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="912" y="1325" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_TeamMerge_di" bpmnElement="GW_TeamMerge" isMarkerVisible="true"><dc:Bounds x="1175" y="1350" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BRT_TeamRules_di" bpmnElement="BRT_TeamRules"><dc:Bounds x="1300" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Team_di" bpmnElement="GW_Team" isMarkerVisible="true"><dc:Bounds x="1475" y="1350" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1512" y="1325" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_TeamViolation_di" bpmnElement="Send_TeamViolation"><dc:Bounds x="1450" y="1450" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_InvalidTeam_di" bpmnElement="End_InvalidTeam"><dc:Bounds x="1632" y="1472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1608" y="1513" width="85" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Similarity_di" bpmnElement="ST_Similarity"><dc:Bounds x="1750" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_SimError_di" bpmnElement="B_SimError"><dc:Bounds x="1812" y="1317" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1842" y="1279" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Similar_di" bpmnElement="GW_Similar" isMarkerVisible="true"><dc:Bounds x="1925" y="1350" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1962" y="1398" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_NewTopic_di" bpmnElement="GW_NewTopic" isMarkerVisible="true"><dc:Bounds x="2825" y="1465" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2715" y="1470" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Rejected_di" bpmnElement="End_Rejected"><dc:Bounds x="2982" y="1472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2948" y="1513" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_InviteMerge_di" bpmnElement="GW_InviteMerge" isMarkerVisible="true"><dc:Bounds x="2225" y="1580" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_Invite_di" bpmnElement="Send_Invite"><dc:Bounds x="2050" y="1565" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_MatchMerge_di" bpmnElement="GW_MatchMerge" isMarkerVisible="true"><dc:Bounds x="3125" y="1350" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BRT_Match_di" bpmnElement="BRT_Match"><dc:Bounds x="3250" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_GuideFound_di" bpmnElement="GW_GuideFound" isMarkerVisible="true"><dc:Bounds x="3425" y="1350" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3334" y="1398" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_GuideRequest_di" bpmnElement="Send_GuideRequest"><dc:Bounds x="3550" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Exclude_di" bpmnElement="ST_Exclude"><dc:Bounds x="3700" y="1225" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_RecordMerge_di" bpmnElement="GW_RecordMerge" isMarkerVisible="true"><dc:Bounds x="4325" y="1350" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Reserve_di" bpmnElement="ST_Reserve"><dc:Bounds x="4450" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_Compensate_di" bpmnElement="B_Compensate"><dc:Bounds x="4482" y="1397" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4512" y="1431" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_ReleaseSlot_di" bpmnElement="ST_ReleaseSlot"><dc:Bounds x="4450" y="1450" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Record_di" bpmnElement="SP_Record" isExpanded="false"><dc:Bounds x="4600" y="1335" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_RecordError_di" bpmnElement="B_RecordError"><dc:Bounds x="4662" y="1317" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4692" y="1292" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PostMerge_di" bpmnElement="GW_PostMerge" isMarkerVisible="true"><dc:Bounds x="4775" y="1350" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Await_di" bpmnElement="GW_Await"><dc:Bounds x="4925" y="1350" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="4898" y="1305" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_WindowClosed_di" bpmnElement="Ev_WindowClosed"><dc:Bounds x="5082" y="1357" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5048" y="1398" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Allocated_di" bpmnElement="End_Allocated"><dc:Bounds x="5232" y="1357" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5198" y="1398" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Withdrawal_di" bpmnElement="Ev_Withdrawal"><dc:Bounds x="5082" y="1472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5048" y="1513" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_CompWithdraw_di" bpmnElement="Ev_CompWithdraw"><dc:Bounds x="5232" y="1472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5198" y="1513" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_RecordWithdrawal_di" bpmnElement="ST_RecordWithdrawal"><dc:Bounds x="5350" y="1450" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Withdrawn_di" bpmnElement="End_Withdrawn"><dc:Bounds x="5532" y="1472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5498" y="1513" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_GuideUnavailable_di" bpmnElement="Ev_GuideUnavailable"><dc:Bounds x="5082" y="1587" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5048" y="1628" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_CompGuide_di" bpmnElement="Ev_CompGuide"><dc:Bounds x="5232" y="1587" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5274" y="1592" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_01_TeamDecides_SubmitMerge1_di" bpmnElement="Flow_01_TeamDecides_SubmitMerge1"><di:waypoint x="318" y="195" /><di:waypoint x="425" y="195" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_SubmitMerge1_SubmitMerge2_di" bpmnElement="Flow_02_SubmitMerge1_SubmitMerge2"><di:waypoint x="475" y="195" /><di:waypoint x="575" y="195" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_SubmitMerge2_Submit_di" bpmnElement="Flow_03_SubmitMerge2_Submit"><di:waypoint x="625" y="195" /><di:waypoint x="700" y="195" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_Submit_Validate_di" bpmnElement="Flow_04_Submit_Validate"><di:waypoint x="750" y="235" /><di:waypoint x="750" y="1335" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_Validate_DataValid_di" bpmnElement="Flow_05_Validate_DataValid"><di:waypoint x="800" y="1375" /><di:waypoint x="875" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_DataValid_TeamMerge_di" bpmnElement="Flow_06_DataValid_TeamMerge"><di:waypoint x="925" y="1375" /><di:waypoint x="1175" y="1375" /><bpmndi:BPMNLabel><dc:Bounds x="931" y="1357" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_DataValid_SubmitMerge1_di" bpmnElement="Flow_07_DataValid_SubmitMerge1"><di:waypoint x="900" y="1400" /><di:waypoint x="900" y="1490" /><di:waypoint x="450" y="1490" /><di:waypoint x="450" y="220" /><bpmndi:BPMNLabel><dc:Bounds x="698" y="1436" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_DataValid_FixEscalated_di" bpmnElement="Flow_08_DataValid_FixEscalated"><di:waypoint x="900" y="1350" /><di:waypoint x="900" y="575" /><di:waypoint x="1000" y="575" /><bpmndi:BPMNLabel><dc:Bounds x="796" y="1260" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_FixEscalated_Fixed_di" bpmnElement="Flow_09_FixEscalated_Fixed"><di:waypoint x="1100" y="575" /><di:waypoint x="1175" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_Fixed_TeamMerge_di" bpmnElement="Flow_10_Fixed_TeamMerge"><di:waypoint x="1200" y="600" /><di:waypoint x="1200" y="1350" /><bpmndi:BPMNLabel><dc:Bounds x="1206" y="606" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_Fixed_InvalidData_di" bpmnElement="Flow_11_Fixed_InvalidData"><di:waypoint x="1225" y="575" /><di:waypoint x="1332" y="575" /><bpmndi:BPMNLabel><dc:Bounds x="1231" y="557" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_TeamMerge_TeamRules_di" bpmnElement="Flow_12_TeamMerge_TeamRules"><di:waypoint x="1225" y="1375" /><di:waypoint x="1300" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_TeamRules_Team_di" bpmnElement="Flow_13_TeamRules_Team"><di:waypoint x="1400" y="1375" /><di:waypoint x="1475" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_Team_Screen_di" bpmnElement="Flow_14_Team_Screen"><di:waypoint x="1500" y="1350" /><di:waypoint x="1500" y="575" /><di:waypoint x="1600" y="575" /><bpmndi:BPMNLabel><dc:Bounds x="1469" y="1329" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_Team_TeamViolation_di" bpmnElement="Flow_15_Team_TeamViolation"><di:waypoint x="1500" y="1400" /><di:waypoint x="1500" y="1450" /><bpmndi:BPMNLabel><dc:Bounds x="1396" y="1388" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_TeamViolation_InvalidTeam_di" bpmnElement="Flow_16_TeamViolation_InvalidTeam"><di:waypoint x="1550" y="1490" /><di:waypoint x="1632" y="1490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_Screen_Similarity_di" bpmnElement="Flow_17_Screen_Similarity"><di:waypoint x="1650" y="615" /><di:waypoint x="1650" y="1375" /><di:waypoint x="1750" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_Similarity_Similar_di" bpmnElement="Flow_18_Similarity_Similar"><di:waypoint x="1850" y="1375" /><di:waypoint x="1925" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_Similar_ReviewMerge_di" bpmnElement="Flow_19_Similar_ReviewMerge"><di:waypoint x="1975" y="1375" /><di:waypoint x="2400" y="1375" /><di:waypoint x="2400" y="735" /><bpmndi:BPMNLabel><dc:Bounds x="1981" y="1357" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_Similar_SimMerge_di" bpmnElement="Flow_20_Similar_SimMerge"><di:waypoint x="1950" y="1350" /><di:waypoint x="1950" y="600" /><bpmndi:BPMNLabel><dc:Bounds x="1956" y="1330" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_21_SimError_SimMerge_di" bpmnElement="Flow_21_SimError_SimMerge"><di:waypoint x="1830" y="1317" /><di:waypoint x="1830" y="575" /><di:waypoint x="1925" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_22_SimMerge_SimReview_di" bpmnElement="Flow_22_SimMerge_SimReview"><di:waypoint x="1975" y="575" /><di:waypoint x="2050" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_23_SimReview_SimDecision_di" bpmnElement="Flow_23_SimReview_SimDecision"><di:waypoint x="2150" y="575" /><di:waypoint x="2225" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_24_SimDecision_ReviewMerge_di" bpmnElement="Flow_24_SimDecision_ReviewMerge"><di:waypoint x="2275" y="575" /><di:waypoint x="2325" y="575" /><di:waypoint x="2325" y="710" /><di:waypoint x="2375" y="710" /><bpmndi:BPMNLabel><dc:Bounds x="2281" y="557" width="53" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_25_SimDecision_RejectedDuplicate_di" bpmnElement="Flow_25_SimDecision_RejectedDuplicate"><di:waypoint x="2250" y="550" /><di:waypoint x="2250" y="473" /><bpmndi:BPMNLabel><dc:Bounds x="2253" y="482" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_26_SimDecision_InviteMerge_di" bpmnElement="Flow_26_SimDecision_InviteMerge"><di:waypoint x="2250" y="600" /><di:waypoint x="2250" y="1580" /><bpmndi:BPMNLabel><dc:Bounds x="2148" y="710" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_27_ReviewMerge_Review_di" bpmnElement="Flow_27_ReviewMerge_Review"><di:waypoint x="2425" y="710" /><di:waypoint x="2500" y="710" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_28_Review_DecisionMerge_di" bpmnElement="Flow_28_Review_DecisionMerge"><di:waypoint x="2600" y="710" /><di:waypoint x="2675" y="710" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_29_Reminder_Reminder_di" bpmnElement="Flow_29_Reminder_Reminder"><di:waypoint x="2520" y="768" /><di:waypoint x="2520" y="832" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_30_Escalate_HoD_di" bpmnElement="Flow_30_Escalate_HoD"><di:waypoint x="2580" y="768" /><di:waypoint x="2580" y="850" /><di:waypoint x="2650" y="850" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_31_HoD_DecisionMerge_di" bpmnElement="Flow_31_HoD_DecisionMerge"><di:waypoint x="2700" y="810" /><di:waypoint x="2700" y="735" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_32_DecisionMerge_Decision_di" bpmnElement="Flow_32_DecisionMerge_Decision"><di:waypoint x="2725" y="710" /><di:waypoint x="2825" y="710" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_33_Decision_MatchMerge_di" bpmnElement="Flow_33_Decision_MatchMerge"><di:waypoint x="2875" y="710" /><di:waypoint x="3000" y="710" /><di:waypoint x="3000" y="1375" /><di:waypoint x="3125" y="1375" /><bpmndi:BPMNLabel><dc:Bounds x="2881" y="692" width="59" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_34_Decision_Revise_di" bpmnElement="Flow_34_Decision_Revise"><di:waypoint x="2850" y="685" /><di:waypoint x="2850" y="235" /><bpmndi:BPMNLabel><dc:Bounds x="2850" y="545" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_35_Decision_NewTopic_di" bpmnElement="Flow_35_Decision_NewTopic"><di:waypoint x="2850" y="735" /><di:waypoint x="2850" y="1465" /><bpmndi:BPMNLabel><dc:Bounds x="2850" y="825" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_36_Revise_ReviewMerge_di" bpmnElement="Flow_36_Revise_ReviewMerge"><di:waypoint x="2800" y="195" /><di:waypoint x="2400" y="195" /><di:waypoint x="2400" y="685" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_37_RevTimer_RevLapsed_di" bpmnElement="Flow_37_RevTimer_RevLapsed"><di:waypoint x="2885" y="253" /><di:waypoint x="2885" y="310" /><di:waypoint x="2982" y="310" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_38_NewTopic_Rejected_di" bpmnElement="Flow_38_NewTopic_Rejected"><di:waypoint x="2875" y="1490" /><di:waypoint x="2982" y="1490" /><bpmndi:BPMNLabel><dc:Bounds x="2881" y="1472" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_39_NewTopic_InviteMerge_di" bpmnElement="Flow_39_NewTopic_InviteMerge"><di:waypoint x="2850" y="1515" /><di:waypoint x="2850" y="1605" /><di:waypoint x="2275" y="1605" /><bpmndi:BPMNLabel><dc:Bounds x="2748" y="1562" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_40_InviteMerge_Invite_di" bpmnElement="Flow_40_InviteMerge_Invite"><di:waypoint x="2225" y="1605" /><di:waypoint x="2150" y="1605" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_41_Invite_SubmitMerge1_di" bpmnElement="Flow_41_Invite_SubmitMerge1"><di:waypoint x="2050" y="1605" /><di:waypoint x="225" y="1605" /><di:waypoint x="225" y="98" /><di:waypoint x="450" y="98" /><di:waypoint x="450" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_42_Deadline_FlagTeam_di" bpmnElement="Flow_42_Deadline_FlagTeam"><di:waypoint x="780" y="253" /><di:waypoint x="780" y="310" /><di:waypoint x="882" y="310" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_43_FlagTeam_LateRequest_di" bpmnElement="Flow_43_FlagTeam_LateRequest"><di:waypoint x="918" y="310" /><di:waypoint x="1000" y="310" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_44_LateRequest_LateDecide_di" bpmnElement="Flow_44_LateRequest_LateDecide"><di:waypoint x="1100" y="310" /><di:waypoint x="1200" y="310" /><di:waypoint x="1200" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_45_LateTimer_Lapsed_di" bpmnElement="Flow_45_LateTimer_Lapsed"><di:waypoint x="1080" y="252" /><di:waypoint x="1080" y="195" /><di:waypoint x="1182" y="195" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_46_LateDecide_Late_di" bpmnElement="Flow_46_LateDecide_Late"><di:waypoint x="1250" y="455" /><di:waypoint x="1325" y="455" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_47_Late_SubmitMerge2_di" bpmnElement="Flow_47_Late_SubmitMerge2"><di:waypoint x="1350" y="430" /><di:waypoint x="1350" y="120" /><di:waypoint x="600" y="120" /><di:waypoint x="600" y="170" /><bpmndi:BPMNLabel><dc:Bounds x="1348" y="260" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_48_Late_LateRefused_di" bpmnElement="Flow_48_Late_LateRefused"><di:waypoint x="1375" y="455" /><di:waypoint x="1482" y="455" /><bpmndi:BPMNLabel><dc:Bounds x="1381" y="437" width="53" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_49_MatchMerge_Match_di" bpmnElement="Flow_49_MatchMerge_Match"><di:waypoint x="3175" y="1375" /><di:waypoint x="3250" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_50_Match_GuideFound_di" bpmnElement="Flow_50_Match_GuideFound"><di:waypoint x="3350" y="1375" /><di:waypoint x="3425" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_51_GuideFound_GuideRequest_di" bpmnElement="Flow_51_GuideFound_GuideRequest"><di:waypoint x="3475" y="1375" /><di:waypoint x="3550" y="1375" /><bpmndi:BPMNLabel><dc:Bounds x="3481" y="1357" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_52_GuideFound_ManualMerge_di" bpmnElement="Flow_52_GuideFound_ManualMerge"><di:waypoint x="3450" y="1350" /><di:waypoint x="3450" y="575" /><di:waypoint x="4025" y="575" /><bpmndi:BPMNLabel><dc:Bounds x="3343" y="1119" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_53_GuideRequest_GuideRespond_di" bpmnElement="Flow_53_GuideRequest_GuideRespond"><di:waypoint x="3650" y="1375" /><di:waypoint x="3675" y="1375" /><di:waypoint x="3675" y="1060" /><di:waypoint x="3700" y="1060" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_54_GuideRespond_Response_di" bpmnElement="Flow_54_GuideRespond_Response"><di:waypoint x="3800" y="1060" /><di:waypoint x="3875" y="1060" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_55_Response_RecordMerge_di" bpmnElement="Flow_55_Response_RecordMerge"><di:waypoint x="3925" y="1060" /><di:waypoint x="4275" y="1060" /><di:waypoint x="4275" y="1375" /><di:waypoint x="4325" y="1375" /><bpmndi:BPMNLabel><dc:Bounds x="3931" y="1042" width="59" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_56_Response_RetryMerge_di" bpmnElement="Flow_56_Response_RetryMerge"><di:waypoint x="3900" y="1085" /><di:waypoint x="3900" y="1135" /><bpmndi:BPMNLabel><dc:Bounds x="3906" y="1091" width="59" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_57_GuideTimer_RetryMerge_di" bpmnElement="Flow_57_GuideTimer_RetryMerge"><di:waypoint x="3780" y="1118" /><di:waypoint x="3780" y="1160" /><di:waypoint x="3875" y="1160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_58_WithdrawEarly_WithdrawnEarly_di" bpmnElement="Flow_58_WithdrawEarly_WithdrawnEarly"><di:waypoint x="3780" y="1002" /><di:waypoint x="3780" y="965" /><di:waypoint x="3618" y="965" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_59_RetryMerge_Attempts_di" bpmnElement="Flow_59_RetryMerge_Attempts"><di:waypoint x="3925" y="1160" /><di:waypoint x="4025" y="1160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_60_Attempts_Exclude_di" bpmnElement="Flow_60_Attempts_Exclude"><di:waypoint x="4050" y="1185" /><di:waypoint x="4050" y="1265" /><di:waypoint x="3800" y="1265" /><bpmndi:BPMNLabel><dc:Bounds x="3936" y="1222" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_61_Exclude_MatchMerge_di" bpmnElement="Flow_61_Exclude_MatchMerge"><di:waypoint x="3700" y="1265" /><di:waypoint x="3150" y="1265" /><di:waypoint x="3150" y="1350" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_62_Attempts_ManualMerge_di" bpmnElement="Flow_62_Attempts_ManualMerge"><di:waypoint x="4050" y="1135" /><di:waypoint x="4050" y="600" /><bpmndi:BPMNLabel><dc:Bounds x="4048" y="972" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_63_ManualMerge_ManualAllocate_di" bpmnElement="Flow_63_ManualMerge_ManualAllocate"><di:waypoint x="4075" y="575" /><di:waypoint x="4150" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_64_ManualAllocate_Arranged_di" bpmnElement="Flow_64_ManualAllocate_Arranged"><di:waypoint x="4250" y="575" /><di:waypoint x="4325" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_65_Arranged_RecordMerge_di" bpmnElement="Flow_65_Arranged_RecordMerge"><di:waypoint x="4350" y="600" /><di:waypoint x="4350" y="1350" /><bpmndi:BPMNLabel><dc:Bounds x="4350" y="675" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_66_Arranged_Waitlisted_di" bpmnElement="Flow_66_Arranged_Waitlisted"><di:waypoint x="4375" y="575" /><di:waypoint x="4482" y="575" /><bpmndi:BPMNLabel><dc:Bounds x="4381" y="544" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_67_RecordMerge_Reserve_di" bpmnElement="Flow_67_RecordMerge_Reserve"><di:waypoint x="4375" y="1375" /><di:waypoint x="4450" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_68_Reserve_Record_di" bpmnElement="Flow_68_Reserve_Record"><di:waypoint x="4550" y="1375" /><di:waypoint x="4600" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_69_Record_PostMerge_di" bpmnElement="Flow_69_Record_PostMerge"><di:waypoint x="4700" y="1375" /><di:waypoint x="4775" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_70_RecordError_ManualRecord_di" bpmnElement="Flow_70_RecordError_ManualRecord"><di:waypoint x="4680" y="1317" /><di:waypoint x="4680" y="575" /><di:waypoint x="4750" y="575" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_71_ManualRecord_PostMerge_di" bpmnElement="Flow_71_ManualRecord_PostMerge"><di:waypoint x="4800" y="615" /><di:waypoint x="4800" y="1350" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_72_PostMerge_Await_di" bpmnElement="Flow_72_PostMerge_Await"><di:waypoint x="4825" y="1375" /><di:waypoint x="4925" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_73_Await_WindowClosed_di" bpmnElement="Flow_73_Await_WindowClosed"><di:waypoint x="4975" y="1375" /><di:waypoint x="5082" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_74_Await_Withdrawal_di" bpmnElement="Flow_74_Await_Withdrawal"><di:waypoint x="4950" y="1400" /><di:waypoint x="4950" y="1490" /><di:waypoint x="5082" y="1490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_75_Await_GuideUnavailable_di" bpmnElement="Flow_75_Await_GuideUnavailable"><di:waypoint x="4950" y="1400" /><di:waypoint x="4950" y="1605" /><di:waypoint x="5082" y="1605" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_76_WindowClosed_Allocated_di" bpmnElement="Flow_76_WindowClosed_Allocated"><di:waypoint x="5118" y="1375" /><di:waypoint x="5232" y="1375" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_77_Withdrawal_CompWithdraw_di" bpmnElement="Flow_77_Withdrawal_CompWithdraw"><di:waypoint x="5118" y="1490" /><di:waypoint x="5232" y="1490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_78_CompWithdraw_RecordWithdrawal_di" bpmnElement="Flow_78_CompWithdraw_RecordWithdrawal"><di:waypoint x="5268" y="1490" /><di:waypoint x="5350" y="1490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_79_RecordWithdrawal_Withdrawn_di" bpmnElement="Flow_79_RecordWithdrawal_Withdrawn"><di:waypoint x="5450" y="1490" /><di:waypoint x="5532" y="1490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_80_GuideUnavailable_CompGuide_di" bpmnElement="Flow_80_GuideUnavailable_CompGuide"><di:waypoint x="5118" y="1605" /><di:waypoint x="5232" y="1605" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_81_CompGuide_MatchMerge_di" bpmnElement="Flow_81_CompGuide_MatchMerge"><di:waypoint x="5250" y="1623" /><di:waypoint x="5250" y="1668" /><di:waypoint x="3150" y="1668" /><di:waypoint x="3150" y="1400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Compensation_di" bpmnElement="Association_Compensation"><di:waypoint x="4500" y="1433" /><di:waypoint x="4500" y="1450" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_RecordAllocation" name="Record Allocation &amp; Notify Parties">
+    <bpmndi:BPMNPlane id="BPMNPlane_RecordAllocation" bpmnElement="SP_Record">
+      <bpmndi:BPMNShape id="SP_Start_di" bpmnElement="SP_Start"><dc:Bounds x="162" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="128" y="203" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_MergeDb_di" bpmnElement="SP_MergeDb" isMarkerVisible="true"><dc:Bounds x="255" y="155" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_WriteDb_di" bpmnElement="SP_WriteDb"><dc:Bounds x="360" y="140" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_B_DbError_di" bpmnElement="SP_B_DbError"><dc:Bounds x="422" y="202" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="452" y="236" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_GwDbRetry_di" bpmnElement="SP_GwDbRetry" isMarkerVisible="true"><dc:Bounds x="415" y="305" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="471" y="317" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_WaitDb_di" bpmnElement="SP_WaitDb"><dc:Bounds x="262" y="312" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="244" y="353" width="72" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_ErrDb_di" bpmnElement="SP_ErrDb"><dc:Bounds x="422" y="422" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="388" y="463" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Split_di" bpmnElement="SP_Split"><dc:Bounds x="535" y="155" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_MergeTeam_di" bpmnElement="SP_MergeTeam" isMarkerVisible="true"><dc:Bounds x="635" y="155" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_NotifyTeam_di" bpmnElement="SP_NotifyTeam"><dc:Bounds x="740" y="140" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_B_TeamError_di" bpmnElement="SP_B_TeamError"><dc:Bounds x="802" y="202" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="832" y="236" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_GwTeamRetry_di" bpmnElement="SP_GwTeamRetry" isMarkerVisible="true"><dc:Bounds x="795" y="305" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="851" y="317" width="85" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_WaitTeam_di" bpmnElement="SP_WaitTeam"><dc:Bounds x="642" y="312" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="624" y="353" width="72" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_ErrTeam_di" bpmnElement="SP_ErrTeam"><dc:Bounds x="802" y="422" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="768" y="463" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_MergeGuide_di" bpmnElement="SP_MergeGuide" isMarkerVisible="true"><dc:Bounds x="635" y="575" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_NotifyGuide_di" bpmnElement="SP_NotifyGuide"><dc:Bounds x="740" y="560" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_B_GuideError_di" bpmnElement="SP_B_GuideError"><dc:Bounds x="802" y="622" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="832" y="656" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_GwGuideRetry_di" bpmnElement="SP_GwGuideRetry" isMarkerVisible="true"><dc:Bounds x="795" y="725" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="851" y="737" width="85" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_WaitGuide_di" bpmnElement="SP_WaitGuide"><dc:Bounds x="642" y="732" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="624" y="773" width="72" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_ErrGuide_di" bpmnElement="SP_ErrGuide"><dc:Bounds x="802" y="842" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="768" y="883" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Join_di" bpmnElement="SP_Join"><dc:Bounds x="955" y="155" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_End_di" bpmnElement="SP_End"><dc:Bounds x="1072" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1038" y="203" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_82_Start_MergeDb_di" bpmnElement="Flow_82_Start_MergeDb"><di:waypoint x="198" y="180" /><di:waypoint x="255" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_83_MergeDb_WriteDb_di" bpmnElement="Flow_83_MergeDb_WriteDb"><di:waypoint x="305" y="180" /><di:waypoint x="360" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_84_WriteDb_Split_di" bpmnElement="Flow_84_WriteDb_Split"><di:waypoint x="460" y="180" /><di:waypoint x="535" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_85_B_DbError_GwDbRetry_di" bpmnElement="Flow_85_B_DbError_GwDbRetry"><di:waypoint x="440" y="238" /><di:waypoint x="440" y="305" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_86_GwDbRetry_WaitDb_di" bpmnElement="Flow_86_GwDbRetry_WaitDb"><di:waypoint x="415" y="330" /><di:waypoint x="298" y="330" /><bpmndi:BPMNLabel><dc:Bounds x="382" y="312" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_87_WaitDb_MergeDb_di" bpmnElement="Flow_87_WaitDb_MergeDb"><di:waypoint x="280" y="312" /><di:waypoint x="280" y="205" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_88_GwDbRetry_ErrDb_di" bpmnElement="Flow_88_GwDbRetry_ErrDb"><di:waypoint x="440" y="355" /><di:waypoint x="440" y="422" /><bpmndi:BPMNLabel><dc:Bounds x="446" y="361" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_89_Split_MergeTeam_di" bpmnElement="Flow_89_Split_MergeTeam"><di:waypoint x="585" y="180" /><di:waypoint x="635" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_90_MergeTeam_NotifyTeam_di" bpmnElement="Flow_90_MergeTeam_NotifyTeam"><di:waypoint x="685" y="180" /><di:waypoint x="740" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_91_NotifyTeam_Join_di" bpmnElement="Flow_91_NotifyTeam_Join"><di:waypoint x="840" y="180" /><di:waypoint x="955" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_92_B_TeamError_GwTeamRetry_di" bpmnElement="Flow_92_B_TeamError_GwTeamRetry"><di:waypoint x="820" y="238" /><di:waypoint x="820" y="305" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_93_GwTeamRetry_WaitTeam_di" bpmnElement="Flow_93_GwTeamRetry_WaitTeam"><di:waypoint x="795" y="330" /><di:waypoint x="678" y="330" /><bpmndi:BPMNLabel><dc:Bounds x="762" y="312" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_94_WaitTeam_MergeTeam_di" bpmnElement="Flow_94_WaitTeam_MergeTeam"><di:waypoint x="660" y="312" /><di:waypoint x="660" y="205" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_95_GwTeamRetry_ErrTeam_di" bpmnElement="Flow_95_GwTeamRetry_ErrTeam"><di:waypoint x="820" y="355" /><di:waypoint x="820" y="422" /><bpmndi:BPMNLabel><dc:Bounds x="826" y="361" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_96_Split_MergeGuide_di" bpmnElement="Flow_96_Split_MergeGuide"><di:waypoint x="560" y="205" /><di:waypoint x="560" y="600" /><di:waypoint x="635" y="600" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_97_MergeGuide_NotifyGuide_di" bpmnElement="Flow_97_MergeGuide_NotifyGuide"><di:waypoint x="685" y="600" /><di:waypoint x="740" y="600" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_98_NotifyGuide_Join_di" bpmnElement="Flow_98_NotifyGuide_Join"><di:waypoint x="840" y="600" /><di:waypoint x="980" y="600" /><di:waypoint x="980" y="205" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_99_B_GuideError_GwGuideRetry_di" bpmnElement="Flow_99_B_GuideError_GwGuideRetry"><di:waypoint x="820" y="658" /><di:waypoint x="820" y="725" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_100_GwGuideRetry_WaitGuide_di" bpmnElement="Flow_100_GwGuideRetry_WaitGuide"><di:waypoint x="795" y="750" /><di:waypoint x="678" y="750" /><bpmndi:BPMNLabel><dc:Bounds x="762" y="732" width="27" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_101_WaitGuide_MergeGuide_di" bpmnElement="Flow_101_WaitGuide_MergeGuide"><di:waypoint x="660" y="732" /><di:waypoint x="660" y="625" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_102_GwGuideRetry_ErrGuide_di" bpmnElement="Flow_102_GwGuideRetry_ErrGuide"><di:waypoint x="820" y="775" /><di:waypoint x="820" y="842" /><bpmndi:BPMNLabel><dc:Bounds x="826" y="781" width="21" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_103_Join_End_di" bpmnElement="Flow_103_Join_End"><di:waypoint x="1005" y="180" /><di:waypoint x="1072" y="180" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
