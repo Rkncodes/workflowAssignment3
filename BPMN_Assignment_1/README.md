@@ -13,7 +13,7 @@ BPMN 2.0 model of a department's final-year project approval and guide-allocatio
 
 ![Student Project Approval & Allocation System – BPMN diagram](Assignment1_BPMN_Diagram.png)
 
-The image is wide; click it to open at full resolution. The upper part is the main process. The lower part is the inside of the sub-process **Record Allocation & Notify Parties**, which appears as a single collapsed box in the main process.
+The diagram is wide, so GitHub scales it down here. **[Open the full-size diagram](Assignment1_BPMN_Diagram.png)** and zoom in to read the labels. The upper part is the main process. The lower part is the inside of the sub-process **Record Allocation & Notify Parties**, which appears as a single collapsed box in the main process.
 
 ## Overview
 

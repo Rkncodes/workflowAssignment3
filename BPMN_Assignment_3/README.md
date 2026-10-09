@@ -13,7 +13,7 @@ BPMN 2.0 model of a bank's personal and secured loan process, showing the normal
 
 ![Loan Origination & Approval – BPMN diagram](Assignment3_BPMN_Diagram.png)
 
-The image is wide; click it to open at full resolution. The upper part is the main process with the external Credit Bureau pool beneath it. Below are the two sub-processes that appear as collapsed boxes in the main process: **Fraud / AML Investigation** and **Retrieve Credit Bureau Report**.
+The diagram is wide, so GitHub scales it down here. **[Open the full-size diagram](Assignment3_BPMN_Diagram.png)** and zoom in to read the labels. The upper part is the main process with the external Credit Bureau pool beneath it. Below are the two sub-processes that appear as collapsed boxes in the main process: **Fraud / AML Investigation** and **Retrieve Credit Bureau Report**.
 
 ## Overview
 

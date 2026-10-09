@@ -13,7 +13,7 @@ BPMN 2.0 model of a courier shipment from booking to its final state, with empha
 
 ![Logistics & Shipment Exception Management – BPMN diagram](Assignment2_BPMN_Diagram.png)
 
-The image is wide; click it to open at full resolution. The upper part is the main process. Below it are the two sub-processes that appear as collapsed boxes in the main process: **Return Parcel to Sender** and **Handle Damage Claim**.
+The diagram is wide, so GitHub scales it down here. **[Open the full-size diagram](Assignment2_BPMN_Diagram.png)** and zoom in to read the labels. The upper part is the main process. Below it are the two sub-processes that appear as collapsed boxes in the main process: **Return Parcel to Sender** and **Handle Damage Claim**.
 
 ## Overview
 
