@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_Shipment" targetNamespace="http://example.edu/bpmn/shipment-exception-management" exporter="hand-authored BPMN 2.0 (bpmn.io compatible)" exporterVersion="1.0">
+  <bpmn:collaboration id="Collaboration_Shipment">
+    <bpmn:participant id="Participant_Courier" name="Courier Company – Shipment Life Cycle" processRef="Process_Shipment" />
+  </bpmn:collaboration>
+  <bpmn:message id="Msg_Arrival" name="Arrival scan at destination hub" />
+  <bpmn:message id="Msg_Delay" name="Delay report" />
+  <bpmn:message id="Msg_Cancellation" name="Cancellation request" />
+  <bpmn:message id="Msg_AddressQuery" name="Address query" />
+  <bpmn:message id="Msg_Surcharge" name="Surcharge advice" />
+  <bpmn:message id="Msg_CancelNotice" name="Cancellation notice" />
+  <bpmn:message id="Msg_LostNotice" name="Loss and compensation notice" />
+  <bpmn:message id="Msg_DamageNotice" name="Damage notice" />
+  <bpmn:error id="Error_Scan" name="Scan / tracking system failure" errorCode="SCAN_SYSTEM_FAILURE" />
+  <bpmn:process id="Process_Shipment" name="Logistics &amp; Shipment Exception Management" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Shipper" name="Shipper / Customer">
+        <bpmn:flowNodeRef>Start_Booking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_BookMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Book</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ControlTower" name="Control Tower / Dispatcher">
+        <bpmn:flowNodeRef>BRT_Validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_BookValid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_InvalidBooking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Charge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_CompCharge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Refund</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PickupMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Schedule</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PickAttempts</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_CompPickup</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_PickupFailed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Track</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TrackErr</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_TrackMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_Picked</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_Cancel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Recall</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_CompCancel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Cancelled</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_Delay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_Delay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Reroute</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Customs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Cleared</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_DocReq</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Recv_Docs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_DocTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Send_OFD</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Close</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Delivered</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PickupAgent" name="Pickup Agent">
+        <bpmn:flowNodeRef>UT_Pickup</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Picked</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>AND_Split</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>AND_Join</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_CustDone</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_OFDMerge</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Hub" name="Hub / Warehouse">
+        <bpmn:flowNodeRef>MT_Sort</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_ManualScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Reconcile</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>MT_Dispatch</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_AwaitMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Await</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_Arrived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_DestScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Intact</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Intl</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>MT_Hold</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_HoldTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_CloseMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_RTSMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SP_RTS</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Returned</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_DamageMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Inspect</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Insured</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Uninsured</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_DeliveryAgent" name="Delivery Agent">
+        <bpmn:flowNodeRef>UT_Deliver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Outcome</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Why</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_DelAttempts</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_LoopMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_RTSPre</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Recipient" name="Recipient">
+        <bpmn:flowNodeRef>Ev_AddrQuery</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_NewAddr</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_AddrTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Surcharge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Ev_Surcharge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_AddrMerge</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Claims" name="Claims Department">
+        <bpmn:flowNodeRef>Ev_NoScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UT_Trace</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TraceTimer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ST_Lost</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Lost</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SP_Claim</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Claim</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Booking" name="Shipper wants to send a parcel">
+      <bpmn:outgoing>Flow_016_Booking_BookMerge</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="GW_BookMerge">
+      <bpmn:incoming>Flow_016_Booking_BookMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_021_BookValid_BookMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_017_BookMerge_Book</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_Book" name="Create Shipment Booking">
+      <bpmn:documentation>Shipper enters addresses, weight, service level and COD amount. Each completion increments bookingAttempts.</bpmn:documentation>
+      <bpmn:incoming>Flow_017_BookMerge_Book</bpmn:incoming>
+      <bpmn:outgoing>Flow_018_Book_Validate</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:businessRuleTask id="BRT_Validate" name="Validate Booking &amp; Calculate Charges">
+      <bpmn:documentation>Rule set: address completeness and serviceability, weight limits, service level; returns validity and the charge.</bpmn:documentation>
+      <bpmn:incoming>Flow_018_Book_Validate</bpmn:incoming>
+      <bpmn:outgoing>Flow_019_Validate_BookValid</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="GW_BookValid" name="Booking valid?">
+      <bpmn:incoming>Flow_019_Validate_BookValid</bpmn:incoming>
+      <bpmn:outgoing>Flow_020_BookValid_Charge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_021_BookValid_BookMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_022_BookValid_InvalidBooking</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_InvalidBooking" name="Cancelled – invalid booking">
+      <bpmn:incoming>Flow_022_BookValid_InvalidBooking</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_InvalidBooking_def" messageRef="Msg_CancelNotice" />
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ST_Charge" name="Confirm Booking &amp; Collect Charges">
+      <bpmn:incoming>Flow_020_BookValid_Charge</bpmn:incoming>
+      <bpmn:outgoing>Flow_023_Charge_PickupMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="B_CompCharge" name="Undo charges" attachedToRef="ST_Charge">
+      <bpmn:compensateEventDefinition id="B_CompCharge_def" />
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="ST_Refund" name="Refund Charges less Cancellation Fee" isForCompensation="true" />
+    <bpmn:exclusiveGateway id="GW_PickupMerge">
+      <bpmn:incoming>Flow_023_Charge_PickupMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_029_PickAttempts_PickupMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_024_PickupMerge_Schedule</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ST_Schedule" name="Schedule Pickup &amp; Assign Driver">
+      <bpmn:incoming>Flow_024_PickupMerge_Schedule</bpmn:incoming>
+      <bpmn:outgoing>Flow_025_Schedule_Pickup</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_PickAttempts" name="Pickup attempts &lt; 2?">
+      <bpmn:incoming>Flow_028_Picked_PickAttempts</bpmn:incoming>
+      <bpmn:outgoing>Flow_029_PickAttempts_PickupMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_030_PickAttempts_CompPickup</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="Ev_CompPickup" name="Refund less cancellation fee">
+      <bpmn:incoming>Flow_030_PickAttempts_CompPickup</bpmn:incoming>
+      <bpmn:outgoing>Flow_031_CompPickup_PickupFailed</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="Ev_CompPickup_def" activityRef="ST_Charge" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_PickupFailed" name="Cancelled – pickup failed">
+      <bpmn:incoming>Flow_031_CompPickup_PickupFailed</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_PickupFailed_def" messageRef="Msg_CancelNotice" />
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ST_Track" name="Register Scan &amp; Update Tracking">
+      <bpmn:incoming>Flow_032_Split_Track</bpmn:incoming>
+      <bpmn:outgoing>Flow_034_Track_TrackMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="B_TrackErr" name="Scan / tracking system failure" attachedToRef="ST_Track">
+      <bpmn:outgoing>Flow_035_TrackErr_ManualScan</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="B_TrackErr_def" errorRef="Error_Scan" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_TrackMerge">
+      <bpmn:incoming>Flow_034_Track_TrackMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_037_Reconcile_TrackMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_038_TrackMerge_Picked</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="Send_Picked" name="Notify Shipper: Parcel Picked Up">
+      <bpmn:incoming>Flow_038_TrackMerge_Picked</bpmn:incoming>
+      <bpmn:outgoing>Flow_039_Picked_Join</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:intermediateCatchEvent id="Ev_Cancel" name="Cancellation requested">
+      <bpmn:incoming>Flow_046_Await_Cancel</bpmn:incoming>
+      <bpmn:outgoing>Flow_051_Cancel_Recall</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Cancel_def" messageRef="Msg_Cancellation" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="UT_Recall" name="Stop Movement &amp; Return Parcel to Shipper">
+      <bpmn:incoming>Flow_051_Cancel_Recall</bpmn:incoming>
+      <bpmn:outgoing>Flow_052_Recall_CompCancel</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:intermediateThrowEvent id="Ev_CompCancel" name="Refund less cancellation fee">
+      <bpmn:incoming>Flow_052_Recall_CompCancel</bpmn:incoming>
+      <bpmn:outgoing>Flow_053_CompCancel_Cancelled</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="Ev_CompCancel_def" activityRef="ST_Charge" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_Cancelled" name="Cancelled after dispatch – parcel returned">
+      <bpmn:incoming>Flow_053_CompCancel_Cancelled</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Cancelled_def" messageRef="Msg_CancelNotice" />
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="Ev_Delay" name="Delay reported">
+      <bpmn:incoming>Flow_045_Await_Delay</bpmn:incoming>
+      <bpmn:outgoing>Flow_048_Delay_Delay</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Delay_def" messageRef="Msg_Delay" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sendTask id="Send_Delay" name="Notify Customer of Delay">
+      <bpmn:incoming>Flow_048_Delay_Delay</bpmn:incoming>
+      <bpmn:outgoing>Flow_049_Delay_Reroute</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:userTask id="UT_Reroute" name="Reroute or Assign Vehicle &amp; Update ETA">
+      <bpmn:incoming>Flow_049_Delay_Reroute</bpmn:incoming>
+      <bpmn:outgoing>Flow_050_Reroute_AwaitMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="UT_Customs" name="Submit Customs Declaration">
+      <bpmn:incoming>Flow_063_Intl_Customs</bpmn:incoming>
+      <bpmn:outgoing>Flow_064_Customs_Cleared</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Cleared" name="Customs cleared?">
+      <bpmn:incoming>Flow_064_Customs_Cleared</bpmn:incoming>
+      <bpmn:outgoing>Flow_065_Cleared_CustDone</bpmn:outgoing>
+      <bpmn:outgoing>Flow_066_Cleared_DocReq</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="Send_DocReq" name="Request Customs Documents from Shipper">
+      <bpmn:incoming>Flow_066_Cleared_DocReq</bpmn:incoming>
+      <bpmn:outgoing>Flow_067_DocReq_Docs</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Recv_Docs" name="Receive Customs Documents">
+      <bpmn:incoming>Flow_067_DocReq_Docs</bpmn:incoming>
+      <bpmn:outgoing>Flow_068_Docs_CustDone</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:boundaryEvent id="B_DocTimer" name="5 days: documents not provided" attachedToRef="Recv_Docs">
+      <bpmn:outgoing>Flow_069_DocTimer_RTSMerge</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_DocTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P5D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sendTask id="Send_OFD" name="Notify Recipient: Out for Delivery">
+      <bpmn:incoming>Flow_071_OFDMerge_OFD</bpmn:incoming>
+      <bpmn:outgoing>Flow_072_OFD_Deliver</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:serviceTask id="ST_Close" name="Close Shipment &amp; Generate Invoice">
+      <bpmn:incoming>Flow_093_CloseMerge_Close</bpmn:incoming>
+      <bpmn:outgoing>Flow_094_Close_Delivered</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Delivered" name="Shipment delivered &amp; closed">
+      <bpmn:incoming>Flow_094_Close_Delivered</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_Pickup" name="Collect &amp; Scan Parcel">
+      <bpmn:incoming>Flow_025_Schedule_Pickup</bpmn:incoming>
+      <bpmn:outgoing>Flow_026_Pickup_Picked</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Picked" name="Parcel collected?">
+      <bpmn:incoming>Flow_026_Pickup_Picked</bpmn:incoming>
+      <bpmn:outgoing>Flow_027_Picked_Split</bpmn:outgoing>
+      <bpmn:outgoing>Flow_028_Picked_PickAttempts</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:parallelGateway id="AND_Split">
+      <bpmn:incoming>Flow_027_Picked_Split</bpmn:incoming>
+      <bpmn:outgoing>Flow_032_Split_Track</bpmn:outgoing>
+      <bpmn:outgoing>Flow_033_Split_Sort</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:parallelGateway id="AND_Join">
+      <bpmn:incoming>Flow_039_Picked_Join</bpmn:incoming>
+      <bpmn:incoming>Flow_040_Sort_Join</bpmn:incoming>
+      <bpmn:outgoing>Flow_041_Join_Dispatch</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="GW_CustDone">
+      <bpmn:incoming>Flow_062_Intl_CustDone</bpmn:incoming>
+      <bpmn:incoming>Flow_065_Cleared_CustDone</bpmn:incoming>
+      <bpmn:incoming>Flow_068_Docs_CustDone</bpmn:incoming>
+      <bpmn:outgoing>Flow_070_CustDone_OFDMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_OFDMerge">
+      <bpmn:incoming>Flow_070_CustDone_OFDMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_082_LoopMerge_OFDMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_071_OFDMerge_OFD</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="MT_Sort" name="Receive &amp; Sort at Origin Hub">
+      <bpmn:incoming>Flow_033_Split_Sort</bpmn:incoming>
+      <bpmn:outgoing>Flow_040_Sort_Join</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:userTask id="UT_ManualScan" name="Update Scan Record Manually">
+      <bpmn:incoming>Flow_035_TrackErr_ManualScan</bpmn:incoming>
+      <bpmn:outgoing>Flow_036_ManualScan_Reconcile</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ST_Reconcile" name="Reconcile Tracking Records">
+      <bpmn:incoming>Flow_036_ManualScan_Reconcile</bpmn:incoming>
+      <bpmn:outgoing>Flow_037_Reconcile_TrackMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:manualTask id="MT_Dispatch" name="Dispatch Line-Haul to Destination Hub">
+      <bpmn:incoming>Flow_041_Join_Dispatch</bpmn:incoming>
+      <bpmn:outgoing>Flow_042_Dispatch_AwaitMerge</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="GW_AwaitMerge">
+      <bpmn:incoming>Flow_042_Dispatch_AwaitMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_050_Reroute_AwaitMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_055_Trace_AwaitMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_043_AwaitMerge_Await</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:eventBasedGateway id="GW_Await" name="Await line-haul event">
+      <bpmn:incoming>Flow_043_AwaitMerge_Await</bpmn:incoming>
+      <bpmn:outgoing>Flow_044_Await_Arrived</bpmn:outgoing>
+      <bpmn:outgoing>Flow_045_Await_Delay</bpmn:outgoing>
+      <bpmn:outgoing>Flow_046_Await_Cancel</bpmn:outgoing>
+      <bpmn:outgoing>Flow_047_Await_NoScan</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Ev_Arrived" name="Arrival scan at destination hub">
+      <bpmn:incoming>Flow_044_Await_Arrived</bpmn:incoming>
+      <bpmn:outgoing>Flow_058_Arrived_DestScan</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Arrived_def" messageRef="Msg_Arrival" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="UT_DestScan" name="Scan &amp; Inspect at Destination Hub">
+      <bpmn:incoming>Flow_058_Arrived_DestScan</bpmn:incoming>
+      <bpmn:outgoing>Flow_059_DestScan_Intact</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Intact" name="Parcel intact?">
+      <bpmn:incoming>Flow_059_DestScan_Intact</bpmn:incoming>
+      <bpmn:outgoing>Flow_060_Intact_Intl</bpmn:outgoing>
+      <bpmn:outgoing>Flow_061_Intact_DamageMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Intl" name="International shipment?">
+      <bpmn:incoming>Flow_060_Intact_Intl</bpmn:incoming>
+      <bpmn:outgoing>Flow_062_Intl_CustDone</bpmn:outgoing>
+      <bpmn:outgoing>Flow_063_Intl_Customs</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="MT_Hold" name="Hold Parcel at Depot for Collection">
+      <bpmn:incoming>Flow_081_DelAttempts_Hold</bpmn:incoming>
+      <bpmn:outgoing>Flow_083_Hold_CloseMerge</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:boundaryEvent id="B_HoldTimer" name="7 days: not collected" attachedToRef="MT_Hold">
+      <bpmn:outgoing>Flow_084_HoldTimer_RTSMerge</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_HoldTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_CloseMerge">
+      <bpmn:incoming>Flow_074_Outcome_CloseMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_083_Hold_CloseMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_093_CloseMerge_Close</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_RTSMerge">
+      <bpmn:incoming>Flow_069_DocTimer_RTSMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_084_HoldTimer_RTSMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_092_RTSPre_RTSMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_100_RTSMerge_RTS</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:subProcess id="SP_RTS" name="Return Parcel to Sender">
+      <bpmn:incoming>Flow_100_RTSMerge_RTS</bpmn:incoming>
+      <bpmn:outgoing>Flow_101_RTS_Returned</bpmn:outgoing>
+      <bpmn:startEvent id="RT_Start" name="Return initiated">
+        <bpmn:outgoing>Flow_011_Start_Haul</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:manualTask id="RT_Haul" name="Line-Haul Parcel Back to Origin Hub">
+        <bpmn:incoming>Flow_011_Start_Haul</bpmn:incoming>
+        <bpmn:outgoing>Flow_012_Haul_Charges</bpmn:outgoing>
+      </bpmn:manualTask>
+      <bpmn:serviceTask id="RT_Charges" name="Adjust Charges (return fee / COD reversal)">
+        <bpmn:incoming>Flow_012_Haul_Charges</bpmn:incoming>
+        <bpmn:outgoing>Flow_013_Charges_Notify</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:sendTask id="RT_Notify" name="Notify Shipper of Return">
+        <bpmn:incoming>Flow_013_Charges_Notify</bpmn:incoming>
+        <bpmn:outgoing>Flow_014_Notify_Handover</bpmn:outgoing>
+      </bpmn:sendTask>
+      <bpmn:manualTask id="RT_Handover" name="Hand Over Parcel to Shipper">
+        <bpmn:incoming>Flow_014_Notify_Handover</bpmn:incoming>
+        <bpmn:outgoing>Flow_015_Handover_End</bpmn:outgoing>
+      </bpmn:manualTask>
+      <bpmn:endEvent id="RT_End" name="Parcel returned">
+        <bpmn:incoming>Flow_015_Handover_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_011_Start_Haul" sourceRef="RT_Start" targetRef="RT_Haul" />
+      <bpmn:sequenceFlow id="Flow_012_Haul_Charges" sourceRef="RT_Haul" targetRef="RT_Charges" />
+      <bpmn:sequenceFlow id="Flow_013_Charges_Notify" sourceRef="RT_Charges" targetRef="RT_Notify" />
+      <bpmn:sequenceFlow id="Flow_014_Notify_Handover" sourceRef="RT_Notify" targetRef="RT_Handover" />
+      <bpmn:sequenceFlow id="Flow_015_Handover_End" sourceRef="RT_Handover" targetRef="RT_End" />
+    </bpmn:subProcess>
+    <bpmn:endEvent id="End_Returned" name="Returned to sender">
+      <bpmn:incoming>Flow_101_RTS_Returned</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="GW_DamageMerge">
+      <bpmn:incoming>Flow_061_Intact_DamageMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_075_Outcome_DamageMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_095_DamageMerge_Inspect</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="UT_Inspect" name="Inspect &amp; Document Damage">
+      <bpmn:incoming>Flow_095_DamageMerge_Inspect</bpmn:incoming>
+      <bpmn:outgoing>Flow_096_Inspect_Insured</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Insured" name="Shipment insured?">
+      <bpmn:incoming>Flow_096_Inspect_Insured</bpmn:incoming>
+      <bpmn:outgoing>Flow_097_Insured_Uninsured</bpmn:outgoing>
+      <bpmn:outgoing>Flow_098_Insured_Claim</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Uninsured" name="Closed – damage recorded, shipper informed">
+      <bpmn:incoming>Flow_097_Insured_Uninsured</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Uninsured_def" messageRef="Msg_DamageNotice" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="UT_Deliver" name="Attempt Delivery &amp; Capture Proof of Delivery">
+      <bpmn:incoming>Flow_072_OFD_Deliver</bpmn:incoming>
+      <bpmn:outgoing>Flow_073_Deliver_Outcome</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Outcome" name="Delivery outcome?">
+      <bpmn:incoming>Flow_073_Deliver_Outcome</bpmn:incoming>
+      <bpmn:outgoing>Flow_074_Outcome_CloseMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_075_Outcome_DamageMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_076_Outcome_Why</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Why" name="Reason?">
+      <bpmn:incoming>Flow_076_Outcome_Why</bpmn:incoming>
+      <bpmn:outgoing>Flow_077_Why_DelAttempts</bpmn:outgoing>
+      <bpmn:outgoing>Flow_078_Why_AddrQuery</bpmn:outgoing>
+      <bpmn:outgoing>Flow_079_Why_RTSPre</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_DelAttempts" name="Delivery attempts &lt; 3?">
+      <bpmn:incoming>Flow_077_Why_DelAttempts</bpmn:incoming>
+      <bpmn:outgoing>Flow_080_DelAttempts_LoopMerge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_081_DelAttempts_Hold</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_LoopMerge">
+      <bpmn:incoming>Flow_080_DelAttempts_LoopMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_090_AddrMerge_LoopMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_082_LoopMerge_OFDMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_RTSPre">
+      <bpmn:incoming>Flow_079_Why_RTSPre</bpmn:incoming>
+      <bpmn:incoming>Flow_091_AddrTimer_RTSPre</bpmn:incoming>
+      <bpmn:outgoing>Flow_092_RTSPre_RTSMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="Ev_AddrQuery" name="Address query sent to recipient">
+      <bpmn:incoming>Flow_078_Why_AddrQuery</bpmn:incoming>
+      <bpmn:outgoing>Flow_085_AddrQuery_NewAddr</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_AddrQuery_def" messageRef="Msg_AddressQuery" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:userTask id="UT_NewAddr" name="Provide Corrected Address">
+      <bpmn:incoming>Flow_085_AddrQuery_NewAddr</bpmn:incoming>
+      <bpmn:outgoing>Flow_086_NewAddr_Surcharge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_AddrTimer" name="2 days: no reply" attachedToRef="UT_NewAddr">
+      <bpmn:outgoing>Flow_091_AddrTimer_RTSPre</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_AddrTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P2D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="GW_Surcharge" name="Outside original delivery zone?">
+      <bpmn:incoming>Flow_086_NewAddr_Surcharge</bpmn:incoming>
+      <bpmn:outgoing>Flow_087_Surcharge_Surcharge</bpmn:outgoing>
+      <bpmn:outgoing>Flow_088_Surcharge_AddrMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="Ev_Surcharge" name="Address-change surcharge advised">
+      <bpmn:incoming>Flow_087_Surcharge_Surcharge</bpmn:incoming>
+      <bpmn:outgoing>Flow_089_Surcharge_AddrMerge</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Surcharge_def" messageRef="Msg_Surcharge" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:exclusiveGateway id="GW_AddrMerge">
+      <bpmn:incoming>Flow_088_Surcharge_AddrMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_089_Surcharge_AddrMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_090_AddrMerge_LoopMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateCatchEvent id="Ev_NoScan" name="No scan event for 48 h">
+      <bpmn:incoming>Flow_047_Await_NoScan</bpmn:incoming>
+      <bpmn:outgoing>Flow_054_NoScan_Trace</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="Ev_NoScan_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="UT_Trace" name="Trace Missing Parcel">
+      <bpmn:incoming>Flow_054_NoScan_Trace</bpmn:incoming>
+      <bpmn:outgoing>Flow_055_Trace_AwaitMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="B_TraceTimer" name="5 days: not found" attachedToRef="UT_Trace">
+      <bpmn:outgoing>Flow_056_TraceTimer_Lost</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="B_TraceTimer_def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P5D</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="ST_Lost" name="Declare Lost &amp; Pay Compensation">
+      <bpmn:incoming>Flow_056_TraceTimer_Lost</bpmn:incoming>
+      <bpmn:outgoing>Flow_057_Lost_Lost</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Lost" name="Lost – shipper compensated">
+      <bpmn:incoming>Flow_057_Lost_Lost</bpmn:incoming>
+      <bpmn:messageEventDefinition id="End_Lost_def" messageRef="Msg_LostNotice" />
+    </bpmn:endEvent>
+    <bpmn:subProcess id="SP_Claim" name="Handle Damage Claim">
+      <bpmn:incoming>Flow_098_Insured_Claim</bpmn:incoming>
+      <bpmn:outgoing>Flow_099_Claim_Claim</bpmn:outgoing>
+      <bpmn:startEvent id="CL_Start" name="Claim opened">
+        <bpmn:outgoing>Flow_001_Start_Assess</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="CL_Assess" name="Assess Claim &amp; Evidence">
+        <bpmn:incoming>Flow_001_Start_Assess</bpmn:incoming>
+        <bpmn:outgoing>Flow_002_Assess_GwRes</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:exclusiveGateway id="CL_GwRes" name="Resolution?">
+        <bpmn:incoming>Flow_002_Assess_GwRes</bpmn:incoming>
+        <bpmn:outgoing>Flow_003_GwRes_Refund</bpmn:outgoing>
+        <bpmn:outgoing>Flow_004_GwRes_Replace</bpmn:outgoing>
+        <bpmn:outgoing>Flow_005_GwRes_Reship</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:serviceTask id="CL_Refund" name="Issue Refund">
+        <bpmn:incoming>Flow_003_GwRes_Refund</bpmn:incoming>
+        <bpmn:outgoing>Flow_006_Refund_Merge</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:userTask id="CL_Replace" name="Arrange Replacement">
+        <bpmn:incoming>Flow_004_GwRes_Replace</bpmn:incoming>
+        <bpmn:outgoing>Flow_007_Replace_Merge</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:userTask id="CL_Reship" name="Arrange Reshipment">
+        <bpmn:incoming>Flow_005_GwRes_Reship</bpmn:incoming>
+        <bpmn:outgoing>Flow_008_Reship_Merge</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:exclusiveGateway id="CL_Merge">
+        <bpmn:incoming>Flow_006_Refund_Merge</bpmn:incoming>
+        <bpmn:incoming>Flow_007_Replace_Merge</bpmn:incoming>
+        <bpmn:incoming>Flow_008_Reship_Merge</bpmn:incoming>
+        <bpmn:outgoing>Flow_009_Merge_Notify</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sendTask id="CL_Notify" name="Notify Shipper of Claim Outcome">
+        <bpmn:incoming>Flow_009_Merge_Notify</bpmn:incoming>
+        <bpmn:outgoing>Flow_010_Notify_End</bpmn:outgoing>
+      </bpmn:sendTask>
+      <bpmn:endEvent id="CL_End" name="Claim settled">
+        <bpmn:incoming>Flow_010_Notify_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_001_Start_Assess" sourceRef="CL_Start" targetRef="CL_Assess" />
+      <bpmn:sequenceFlow id="Flow_002_Assess_GwRes" sourceRef="CL_Assess" targetRef="CL_GwRes" />
+      <bpmn:sequenceFlow id="Flow_003_GwRes_Refund" name="Refund" sourceRef="CL_GwRes" targetRef="CL_Refund">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${resolution == 'refund'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_004_GwRes_Replace" name="Replacement" sourceRef="CL_GwRes" targetRef="CL_Replace">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${resolution == 'replacement'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_005_GwRes_Reship" name="Reshipment" sourceRef="CL_GwRes" targetRef="CL_Reship">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${resolution == 'reshipment'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_006_Refund_Merge" sourceRef="CL_Refund" targetRef="CL_Merge" />
+      <bpmn:sequenceFlow id="Flow_007_Replace_Merge" sourceRef="CL_Replace" targetRef="CL_Merge" />
+      <bpmn:sequenceFlow id="Flow_008_Reship_Merge" sourceRef="CL_Reship" targetRef="CL_Merge" />
+      <bpmn:sequenceFlow id="Flow_009_Merge_Notify" sourceRef="CL_Merge" targetRef="CL_Notify" />
+      <bpmn:sequenceFlow id="Flow_010_Notify_End" sourceRef="CL_Notify" targetRef="CL_End" />
+    </bpmn:subProcess>
+    <bpmn:endEvent id="End_Claim" name="Closed – damage claim settled">
+      <bpmn:incoming>Flow_099_Claim_Claim</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_016_Booking_BookMerge" sourceRef="Start_Booking" targetRef="GW_BookMerge" />
+    <bpmn:sequenceFlow id="Flow_017_BookMerge_Book" sourceRef="GW_BookMerge" targetRef="UT_Book" />
+    <bpmn:sequenceFlow id="Flow_018_Book_Validate" sourceRef="UT_Book" targetRef="BRT_Validate" />
+    <bpmn:sequenceFlow id="Flow_019_Validate_BookValid" sourceRef="BRT_Validate" targetRef="GW_BookValid" />
+    <bpmn:sequenceFlow id="Flow_020_BookValid_Charge" name="Yes" sourceRef="GW_BookValid" targetRef="ST_Charge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${bookingValid}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_021_BookValid_BookMerge" name="No – return to shipper (attempts &lt; 3)" sourceRef="GW_BookValid" targetRef="GW_BookMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!bookingValid &amp;&amp; bookingAttempts &lt; 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_022_BookValid_InvalidBooking" name="No – 3 attempts used" sourceRef="GW_BookValid" targetRef="End_InvalidBooking">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!bookingValid &amp;&amp; bookingAttempts &gt;= 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_023_Charge_PickupMerge" sourceRef="ST_Charge" targetRef="GW_PickupMerge" />
+    <bpmn:sequenceFlow id="Flow_024_PickupMerge_Schedule" sourceRef="GW_PickupMerge" targetRef="ST_Schedule" />
+    <bpmn:sequenceFlow id="Flow_025_Schedule_Pickup" sourceRef="ST_Schedule" targetRef="UT_Pickup" />
+    <bpmn:sequenceFlow id="Flow_026_Pickup_Picked" sourceRef="UT_Pickup" targetRef="GW_Picked" />
+    <bpmn:sequenceFlow id="Flow_027_Picked_Split" name="Yes" sourceRef="GW_Picked" targetRef="AND_Split">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${parcelCollected}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_028_Picked_PickAttempts" name="No – shipper absent / parcel not ready" sourceRef="GW_Picked" targetRef="GW_PickAttempts">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!parcelCollected}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_029_PickAttempts_PickupMerge" name="Yes – reschedule" sourceRef="GW_PickAttempts" targetRef="GW_PickupMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${pickupAttempts &lt; 2}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_030_PickAttempts_CompPickup" name="No" sourceRef="GW_PickAttempts" targetRef="Ev_CompPickup">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${pickupAttempts &gt;= 2}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_031_CompPickup_PickupFailed" sourceRef="Ev_CompPickup" targetRef="End_PickupFailed" />
+    <bpmn:sequenceFlow id="Flow_032_Split_Track" sourceRef="AND_Split" targetRef="ST_Track" />
+    <bpmn:sequenceFlow id="Flow_033_Split_Sort" sourceRef="AND_Split" targetRef="MT_Sort" />
+    <bpmn:sequenceFlow id="Flow_034_Track_TrackMerge" sourceRef="ST_Track" targetRef="GW_TrackMerge" />
+    <bpmn:sequenceFlow id="Flow_035_TrackErr_ManualScan" sourceRef="B_TrackErr" targetRef="UT_ManualScan" />
+    <bpmn:sequenceFlow id="Flow_036_ManualScan_Reconcile" sourceRef="UT_ManualScan" targetRef="ST_Reconcile" />
+    <bpmn:sequenceFlow id="Flow_037_Reconcile_TrackMerge" sourceRef="ST_Reconcile" targetRef="GW_TrackMerge" />
+    <bpmn:sequenceFlow id="Flow_038_TrackMerge_Picked" sourceRef="GW_TrackMerge" targetRef="Send_Picked" />
+    <bpmn:sequenceFlow id="Flow_039_Picked_Join" sourceRef="Send_Picked" targetRef="AND_Join" />
+    <bpmn:sequenceFlow id="Flow_040_Sort_Join" sourceRef="MT_Sort" targetRef="AND_Join" />
+    <bpmn:sequenceFlow id="Flow_041_Join_Dispatch" sourceRef="AND_Join" targetRef="MT_Dispatch" />
+    <bpmn:sequenceFlow id="Flow_042_Dispatch_AwaitMerge" sourceRef="MT_Dispatch" targetRef="GW_AwaitMerge" />
+    <bpmn:sequenceFlow id="Flow_043_AwaitMerge_Await" sourceRef="GW_AwaitMerge" targetRef="GW_Await" />
+    <bpmn:sequenceFlow id="Flow_044_Await_Arrived" sourceRef="GW_Await" targetRef="Ev_Arrived" />
+    <bpmn:sequenceFlow id="Flow_045_Await_Delay" sourceRef="GW_Await" targetRef="Ev_Delay" />
+    <bpmn:sequenceFlow id="Flow_046_Await_Cancel" sourceRef="GW_Await" targetRef="Ev_Cancel" />
+    <bpmn:sequenceFlow id="Flow_047_Await_NoScan" sourceRef="GW_Await" targetRef="Ev_NoScan" />
+    <bpmn:sequenceFlow id="Flow_048_Delay_Delay" sourceRef="Ev_Delay" targetRef="Send_Delay" />
+    <bpmn:sequenceFlow id="Flow_049_Delay_Reroute" sourceRef="Send_Delay" targetRef="UT_Reroute" />
+    <bpmn:sequenceFlow id="Flow_050_Reroute_AwaitMerge" sourceRef="UT_Reroute" targetRef="GW_AwaitMerge" />
+    <bpmn:sequenceFlow id="Flow_051_Cancel_Recall" sourceRef="Ev_Cancel" targetRef="UT_Recall" />
+    <bpmn:sequenceFlow id="Flow_052_Recall_CompCancel" sourceRef="UT_Recall" targetRef="Ev_CompCancel" />
+    <bpmn:sequenceFlow id="Flow_053_CompCancel_Cancelled" sourceRef="Ev_CompCancel" targetRef="End_Cancelled" />
+    <bpmn:sequenceFlow id="Flow_054_NoScan_Trace" sourceRef="Ev_NoScan" targetRef="UT_Trace" />
+    <bpmn:sequenceFlow id="Flow_055_Trace_AwaitMerge" sourceRef="UT_Trace" targetRef="GW_AwaitMerge" />
+    <bpmn:sequenceFlow id="Flow_056_TraceTimer_Lost" sourceRef="B_TraceTimer" targetRef="ST_Lost" />
+    <bpmn:sequenceFlow id="Flow_057_Lost_Lost" sourceRef="ST_Lost" targetRef="End_Lost" />
+    <bpmn:sequenceFlow id="Flow_058_Arrived_DestScan" sourceRef="Ev_Arrived" targetRef="UT_DestScan" />
+    <bpmn:sequenceFlow id="Flow_059_DestScan_Intact" sourceRef="UT_DestScan" targetRef="GW_Intact" />
+    <bpmn:sequenceFlow id="Flow_060_Intact_Intl" name="Yes" sourceRef="GW_Intact" targetRef="GW_Intl">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${parcelIntact}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_061_Intact_DamageMerge" name="No – damage found" sourceRef="GW_Intact" targetRef="GW_DamageMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!parcelIntact}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_062_Intl_CustDone" name="No" sourceRef="GW_Intl" targetRef="GW_CustDone">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!international}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_063_Intl_Customs" name="Yes" sourceRef="GW_Intl" targetRef="UT_Customs">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${international}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_064_Customs_Cleared" sourceRef="UT_Customs" targetRef="GW_Cleared" />
+    <bpmn:sequenceFlow id="Flow_065_Cleared_CustDone" name="Yes" sourceRef="GW_Cleared" targetRef="GW_CustDone">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${customsCleared}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_066_Cleared_DocReq" name="No – held" sourceRef="GW_Cleared" targetRef="Send_DocReq">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!customsCleared}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_067_DocReq_Docs" sourceRef="Send_DocReq" targetRef="Recv_Docs" />
+    <bpmn:sequenceFlow id="Flow_068_Docs_CustDone" sourceRef="Recv_Docs" targetRef="GW_CustDone" />
+    <bpmn:sequenceFlow id="Flow_069_DocTimer_RTSMerge" sourceRef="B_DocTimer" targetRef="GW_RTSMerge" />
+    <bpmn:sequenceFlow id="Flow_070_CustDone_OFDMerge" sourceRef="GW_CustDone" targetRef="GW_OFDMerge" />
+    <bpmn:sequenceFlow id="Flow_071_OFDMerge_OFD" sourceRef="GW_OFDMerge" targetRef="Send_OFD" />
+    <bpmn:sequenceFlow id="Flow_072_OFD_Deliver" sourceRef="Send_OFD" targetRef="UT_Deliver" />
+    <bpmn:sequenceFlow id="Flow_073_Deliver_Outcome" sourceRef="UT_Deliver" targetRef="GW_Outcome" />
+    <bpmn:sequenceFlow id="Flow_074_Outcome_CloseMerge" name="Delivered" sourceRef="GW_Outcome" targetRef="GW_CloseMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${outcome == 'delivered'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_075_Outcome_DamageMerge" name="Damage found at doorstep" sourceRef="GW_Outcome" targetRef="GW_DamageMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${outcome == 'damaged'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_076_Outcome_Why" name="Not delivered" sourceRef="GW_Outcome" targetRef="GW_Why">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${outcome == 'failed'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_077_Why_DelAttempts" name="Recipient unavailable" sourceRef="GW_Why" targetRef="GW_DelAttempts">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${reason == 'unavailable'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_078_Why_AddrQuery" name="Wrong address (first correction)" sourceRef="GW_Why" targetRef="Ev_AddrQuery">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${reason == 'address' &amp;&amp; addressCorrections &lt; 1}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_079_Why_RTSPre" name="Refused, COD failed or address uncorrectable" sourceRef="GW_Why" targetRef="GW_RTSPre">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${reason == 'refused' || reason == 'cod' || (reason == 'address' &amp;&amp; addressCorrections &gt;= 1)}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_080_DelAttempts_LoopMerge" name="Yes" sourceRef="GW_DelAttempts" targetRef="GW_LoopMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${deliveryAttempts &lt; 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_081_DelAttempts_Hold" name="No – 3 attempts used" sourceRef="GW_DelAttempts" targetRef="MT_Hold">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${deliveryAttempts &gt;= 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_082_LoopMerge_OFDMerge" sourceRef="GW_LoopMerge" targetRef="GW_OFDMerge" />
+    <bpmn:sequenceFlow id="Flow_083_Hold_CloseMerge" sourceRef="MT_Hold" targetRef="GW_CloseMerge" />
+    <bpmn:sequenceFlow id="Flow_084_HoldTimer_RTSMerge" sourceRef="B_HoldTimer" targetRef="GW_RTSMerge" />
+    <bpmn:sequenceFlow id="Flow_085_AddrQuery_NewAddr" sourceRef="Ev_AddrQuery" targetRef="UT_NewAddr" />
+    <bpmn:sequenceFlow id="Flow_086_NewAddr_Surcharge" sourceRef="UT_NewAddr" targetRef="GW_Surcharge" />
+    <bpmn:sequenceFlow id="Flow_087_Surcharge_Surcharge" name="Yes" sourceRef="GW_Surcharge" targetRef="Ev_Surcharge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${outsideZone}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_088_Surcharge_AddrMerge" name="No" sourceRef="GW_Surcharge" targetRef="GW_AddrMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!outsideZone}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_089_Surcharge_AddrMerge" sourceRef="Ev_Surcharge" targetRef="GW_AddrMerge" />
+    <bpmn:sequenceFlow id="Flow_090_AddrMerge_LoopMerge" sourceRef="GW_AddrMerge" targetRef="GW_LoopMerge" />
+    <bpmn:sequenceFlow id="Flow_091_AddrTimer_RTSPre" sourceRef="B_AddrTimer" targetRef="GW_RTSPre" />
+    <bpmn:sequenceFlow id="Flow_092_RTSPre_RTSMerge" sourceRef="GW_RTSPre" targetRef="GW_RTSMerge" />
+    <bpmn:sequenceFlow id="Flow_093_CloseMerge_Close" sourceRef="GW_CloseMerge" targetRef="ST_Close" />
+    <bpmn:sequenceFlow id="Flow_094_Close_Delivered" sourceRef="ST_Close" targetRef="End_Delivered" />
+    <bpmn:sequenceFlow id="Flow_095_DamageMerge_Inspect" sourceRef="GW_DamageMerge" targetRef="UT_Inspect" />
+    <bpmn:sequenceFlow id="Flow_096_Inspect_Insured" sourceRef="UT_Inspect" targetRef="GW_Insured" />
+    <bpmn:sequenceFlow id="Flow_097_Insured_Uninsured" name="No" sourceRef="GW_Insured" targetRef="End_Uninsured">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!insured}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_098_Insured_Claim" name="Yes" sourceRef="GW_Insured" targetRef="SP_Claim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${insured}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_099_Claim_Claim" sourceRef="SP_Claim" targetRef="End_Claim" />
+    <bpmn:sequenceFlow id="Flow_100_RTSMerge_RTS" sourceRef="GW_RTSMerge" targetRef="SP_RTS" />
+    <bpmn:sequenceFlow id="Flow_101_RTS_Returned" sourceRef="SP_RTS" targetRef="End_Returned" />
+    <bpmn:association id="Association_B_CompCharge_ST_Refund" associationDirection="One" sourceRef="B_CompCharge" targetRef="ST_Refund" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Main" name="Logistics &amp; Shipment Exception Management">
+    <bpmndi:BPMNPlane id="BPMNPlane_Main" bpmnElement="Collaboration_Shipment">
+      <bpmndi:BPMNShape id="Participant_Courier_di" bpmnElement="Participant_Courier" isHorizontal="true"><dc:Bounds x="160" y="80" width="6250" height="1760" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Shipper_di" bpmnElement="Lane_Shipper" isHorizontal="true"><dc:Bounds x="190" y="80" width="6220" height="200" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ControlTower_di" bpmnElement="Lane_ControlTower" isHorizontal="true"><dc:Bounds x="190" y="280" width="6220" height="270" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_PickupAgent_di" bpmnElement="Lane_PickupAgent" isHorizontal="true"><dc:Bounds x="190" y="550" width="6220" height="230" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Hub_di" bpmnElement="Lane_Hub" isHorizontal="true"><dc:Bounds x="190" y="780" width="6220" height="360" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_DeliveryAgent_di" bpmnElement="Lane_DeliveryAgent" isHorizontal="true"><dc:Bounds x="190" y="1140" width="6220" height="240" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Recipient_di" bpmnElement="Lane_Recipient" isHorizontal="true"><dc:Bounds x="190" y="1380" width="6220" height="200" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Claims_di" bpmnElement="Lane_Claims" isHorizontal="true"><dc:Bounds x="190" y="1580" width="6220" height="260" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Booking_di" bpmnElement="Start_Booking"><dc:Bounds x="282" y="152" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="248" y="193" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_BookMerge_di" bpmnElement="GW_BookMerge" isMarkerVisible="true"><dc:Bounds x="415" y="145" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Book_di" bpmnElement="UT_Book"><dc:Bounds x="530" y="130" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BRT_Validate_di" bpmnElement="BRT_Validate"><dc:Bounds x="670" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_BookValid_di" bpmnElement="GW_BookValid" isMarkerVisible="true"><dc:Bounds x="835" y="340" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="872" y="315" width="98" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_InvalidBooking_di" bpmnElement="End_InvalidBooking"><dc:Bounds x="842" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="808" y="503" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Charge_di" bpmnElement="ST_Charge"><dc:Bounds x="950" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_CompCharge_di" bpmnElement="B_CompCharge"><dc:Bounds x="982" y="387" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1012" y="421" width="85" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Refund_di" bpmnElement="ST_Refund"><dc:Bounds x="950" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PickupMerge_di" bpmnElement="GW_PickupMerge" isMarkerVisible="true"><dc:Bounds x="1115" y="340" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Schedule_di" bpmnElement="ST_Schedule"><dc:Bounds x="1230" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PickAttempts_di" bpmnElement="GW_PickAttempts" isMarkerVisible="true"><dc:Bounds x="1535" y="455" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1572" y="503" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_CompPickup_di" bpmnElement="Ev_CompPickup"><dc:Bounds x="1682" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1648" y="417" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_PickupFailed_di" bpmnElement="End_PickupFailed"><dc:Bounds x="1822" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1788" y="503" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Track_di" bpmnElement="ST_Track"><dc:Bounds x="2210" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TrackErr_di" bpmnElement="B_TrackErr"><dc:Bounds x="2272" y="387" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2302" y="421" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_TrackMerge_di" bpmnElement="GW_TrackMerge" isMarkerVisible="true"><dc:Bounds x="2655" y="340" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_Picked_di" bpmnElement="Send_Picked"><dc:Bounds x="2770" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Cancel_di" bpmnElement="Ev_Cancel"><dc:Bounds x="3502" y="347" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3468" y="388" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Recall_di" bpmnElement="UT_Recall"><dc:Bounds x="3610" y="325" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_CompCancel_di" bpmnElement="Ev_CompCancel"><dc:Bounds x="3782" y="347" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3748" y="388" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Cancelled_di" bpmnElement="End_Cancelled"><dc:Bounds x="3922" y="347" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3888" y="388" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Delay_di" bpmnElement="Ev_Delay"><dc:Bounds x="3502" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3471" y="503" width="98" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_Delay_di" bpmnElement="Send_Delay"><dc:Bounds x="3610" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Reroute_di" bpmnElement="UT_Reroute"><dc:Bounds x="3750" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Customs_di" bpmnElement="UT_Customs"><dc:Bounds x="4030" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Cleared_di" bpmnElement="GW_Cleared" isMarkerVisible="true"><dc:Bounds x="4195" y="455" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="4232" y="430" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_DocReq_di" bpmnElement="Send_DocReq"><dc:Bounds x="4310" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Recv_Docs_di" bpmnElement="Recv_Docs"><dc:Bounds x="4450" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_DocTimer_di" bpmnElement="B_DocTimer"><dc:Bounds x="4512" y="422" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4542" y="384" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Send_OFD_di" bpmnElement="Send_OFD"><dc:Bounds x="4870" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Close_di" bpmnElement="ST_Close"><dc:Bounds x="5570" y="440" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Delivered_di" bpmnElement="End_Delivered"><dc:Bounds x="5742" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5708" y="503" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Pickup_di" bpmnElement="UT_Pickup"><dc:Bounds x="1370" y="580" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Picked_di" bpmnElement="GW_Picked" isMarkerVisible="true"><dc:Bounds x="1535" y="595" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1508" y="650" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AND_Split_di" bpmnElement="AND_Split"><dc:Bounds x="1955" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AND_Join_di" bpmnElement="AND_Join"><dc:Bounds x="2935" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_CustDone_di" bpmnElement="GW_CustDone" isMarkerVisible="true"><dc:Bounds x="4615" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_OFDMerge_di" bpmnElement="GW_OFDMerge" isMarkerVisible="true"><dc:Bounds x="4755" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Sort_di" bpmnElement="MT_Sort"><dc:Bounds x="2070" y="815" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_ManualScan_di" bpmnElement="UT_ManualScan"><dc:Bounds x="2350" y="925" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Reconcile_di" bpmnElement="ST_Reconcile"><dc:Bounds x="2490" y="925" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Dispatch_di" bpmnElement="MT_Dispatch"><dc:Bounds x="3050" y="815" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AwaitMerge_di" bpmnElement="GW_AwaitMerge" isMarkerVisible="true"><dc:Bounds x="3215" y="830" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Await_di" bpmnElement="GW_Await"><dc:Bounds x="3355" y="830" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3392" y="805" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Arrived_di" bpmnElement="Ev_Arrived"><dc:Bounds x="3502" y="837" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3468" y="878" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_DestScan_di" bpmnElement="UT_DestScan"><dc:Bounds x="3610" y="815" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Intact_di" bpmnElement="GW_Intact" isMarkerVisible="true"><dc:Bounds x="3775" y="830" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3751" y="798" width="98" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Intl_di" bpmnElement="GW_Intl" isMarkerVisible="true"><dc:Bounds x="3915" y="830" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3952" y="878" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MT_Hold_di" bpmnElement="MT_Hold"><dc:Bounds x="4870" y="925" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_HoldTimer_di" bpmnElement="B_HoldTimer"><dc:Bounds x="4932" y="907" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4834" y="882" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_CloseMerge_di" bpmnElement="GW_CloseMerge" isMarkerVisible="true"><dc:Bounds x="5455" y="940" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_RTSMerge_di" bpmnElement="GW_RTSMerge" isMarkerVisible="true"><dc:Bounds x="6015" y="830" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_RTS_di" bpmnElement="SP_RTS" isExpanded="false"><dc:Bounds x="6130" y="815" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Returned_di" bpmnElement="End_Returned"><dc:Bounds x="6302" y="837" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="6268" y="878" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_DamageMerge_di" bpmnElement="GW_DamageMerge" isMarkerVisible="true"><dc:Bounds x="5315" y="1050" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Inspect_di" bpmnElement="UT_Inspect"><dc:Bounds x="5570" y="1035" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Insured_di" bpmnElement="GW_Insured" isMarkerVisible="true"><dc:Bounds x="5735" y="1050" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="5772" y="1025" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Uninsured_di" bpmnElement="End_Uninsured"><dc:Bounds x="5882" y="1057" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5848" y="1098" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Deliver_di" bpmnElement="UT_Deliver"><dc:Bounds x="5150" y="1170" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Outcome_di" bpmnElement="GW_Outcome" isMarkerVisible="true"><dc:Bounds x="5315" y="1185" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="5352" y="1233" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Why_di" bpmnElement="GW_Why" isMarkerVisible="true"><dc:Bounds x="5315" y="1295" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="5352" y="1343" width="59" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_DelAttempts_di" bpmnElement="GW_DelAttempts" isMarkerVisible="true"><dc:Bounds x="4895" y="1295" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="4868" y="1350" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_LoopMerge_di" bpmnElement="GW_LoopMerge" isMarkerVisible="true"><dc:Bounds x="4755" y="1295" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_RTSPre_di" bpmnElement="GW_RTSPre" isMarkerVisible="true"><dc:Bounds x="6015" y="1295" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_AddrQuery_di" bpmnElement="Ev_AddrQuery"><dc:Bounds x="5322" y="1437" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5364" y="1435" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_NewAddr_di" bpmnElement="UT_NewAddr"><dc:Bounds x="5150" y="1415" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_AddrTimer_di" bpmnElement="B_AddrTimer"><dc:Bounds x="5212" y="1477" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5242" y="1511" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Surcharge_di" bpmnElement="GW_Surcharge" isMarkerVisible="true"><dc:Bounds x="5035" y="1430" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="5008" y="1385" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Surcharge_di" bpmnElement="Ev_Surcharge"><dc:Bounds x="4902" y="1437" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="4866" y="1392" width="108" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_AddrMerge_di" bpmnElement="GW_AddrMerge" isMarkerVisible="true"><dc:Bounds x="4755" y="1430" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_NoScan_di" bpmnElement="Ev_NoScan"><dc:Bounds x="3502" y="1637" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3468" y="1678" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UT_Trace_di" bpmnElement="UT_Trace"><dc:Bounds x="3610" y="1615" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TraceTimer_di" bpmnElement="B_TraceTimer"><dc:Bounds x="3672" y="1677" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3574" y="1711" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ST_Lost_di" bpmnElement="ST_Lost"><dc:Bounds x="3750" y="1730" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Lost_di" bpmnElement="End_Lost"><dc:Bounds x="3922" y="1752" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3888" y="1793" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Claim_di" bpmnElement="SP_Claim" isExpanded="false"><dc:Bounds x="5710" y="1615" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Claim_di" bpmnElement="End_Claim"><dc:Bounds x="5882" y="1637" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="5848" y="1678" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_016_Booking_BookMerge_di" bpmnElement="Flow_016_Booking_BookMerge"><di:waypoint x="318" y="170" /><di:waypoint x="415" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_017_BookMerge_Book_di" bpmnElement="Flow_017_BookMerge_Book"><di:waypoint x="465" y="170" /><di:waypoint x="530" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_018_Book_Validate_di" bpmnElement="Flow_018_Book_Validate"><di:waypoint x="630" y="170" /><di:waypoint x="720" y="170" /><di:waypoint x="720" y="325" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_019_Validate_BookValid_di" bpmnElement="Flow_019_Validate_BookValid"><di:waypoint x="770" y="365" /><di:waypoint x="835" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_020_BookValid_Charge_di" bpmnElement="Flow_020_BookValid_Charge"><di:waypoint x="885" y="365" /><di:waypoint x="950" y="365" /><bpmndi:BPMNLabel><dc:Bounds x="891" y="347" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_021_BookValid_BookMerge_di" bpmnElement="Flow_021_BookValid_BookMerge"><di:waypoint x="860" y="340" /><di:waypoint x="860" y="100" /><di:waypoint x="440" y="100" /><di:waypoint x="440" y="145" /><bpmndi:BPMNLabel><dc:Bounds x="750" y="164" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_022_BookValid_InvalidBooking_di" bpmnElement="Flow_022_BookValid_InvalidBooking"><di:waypoint x="860" y="390" /><di:waypoint x="860" y="462" /><bpmndi:BPMNLabel><dc:Bounds x="866" y="396" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_023_Charge_PickupMerge_di" bpmnElement="Flow_023_Charge_PickupMerge"><di:waypoint x="1050" y="365" /><di:waypoint x="1115" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_024_PickupMerge_Schedule_di" bpmnElement="Flow_024_PickupMerge_Schedule"><di:waypoint x="1165" y="365" /><di:waypoint x="1230" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_025_Schedule_Pickup_di" bpmnElement="Flow_025_Schedule_Pickup"><di:waypoint x="1330" y="365" /><di:waypoint x="1420" y="365" /><di:waypoint x="1420" y="580" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_026_Pickup_Picked_di" bpmnElement="Flow_026_Pickup_Picked"><di:waypoint x="1470" y="620" /><di:waypoint x="1535" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_027_Picked_Split_di" bpmnElement="Flow_027_Picked_Split"><di:waypoint x="1585" y="620" /><di:waypoint x="1955" y="620" /><bpmndi:BPMNLabel><dc:Bounds x="1591" y="602" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_028_Picked_PickAttempts_di" bpmnElement="Flow_028_Picked_PickAttempts"><di:waypoint x="1560" y="595" /><di:waypoint x="1560" y="505" /><bpmndi:BPMNLabel><dc:Bounds x="1446" y="543" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_029_PickAttempts_PickupMerge_di" bpmnElement="Flow_029_PickAttempts_PickupMerge"><di:waypoint x="1535" y="480" /><di:waypoint x="1140" y="480" /><di:waypoint x="1140" y="390" /><bpmndi:BPMNLabel><dc:Bounds x="1425" y="449" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_030_PickAttempts_CompPickup_di" bpmnElement="Flow_030_PickAttempts_CompPickup"><di:waypoint x="1585" y="480" /><di:waypoint x="1682" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="1591" y="462" width="24" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_031_CompPickup_PickupFailed_di" bpmnElement="Flow_031_CompPickup_PickupFailed"><di:waypoint x="1718" y="480" /><di:waypoint x="1822" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_032_Split_Track_di" bpmnElement="Flow_032_Split_Track"><di:waypoint x="1980" y="595" /><di:waypoint x="1980" y="365" /><di:waypoint x="2210" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_033_Split_Sort_di" bpmnElement="Flow_033_Split_Sort"><di:waypoint x="1980" y="645" /><di:waypoint x="1980" y="855" /><di:waypoint x="2070" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_034_Track_TrackMerge_di" bpmnElement="Flow_034_Track_TrackMerge"><di:waypoint x="2310" y="365" /><di:waypoint x="2655" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_035_TrackErr_ManualScan_di" bpmnElement="Flow_035_TrackErr_ManualScan"><di:waypoint x="2290" y="423" /><di:waypoint x="2290" y="965" /><di:waypoint x="2350" y="965" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_036_ManualScan_Reconcile_di" bpmnElement="Flow_036_ManualScan_Reconcile"><di:waypoint x="2450" y="965" /><di:waypoint x="2490" y="965" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_037_Reconcile_TrackMerge_di" bpmnElement="Flow_037_Reconcile_TrackMerge"><di:waypoint x="2590" y="965" /><di:waypoint x="2680" y="965" /><di:waypoint x="2680" y="390" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_038_TrackMerge_Picked_di" bpmnElement="Flow_038_TrackMerge_Picked"><di:waypoint x="2705" y="365" /><di:waypoint x="2770" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_039_Picked_Join_di" bpmnElement="Flow_039_Picked_Join"><di:waypoint x="2870" y="365" /><di:waypoint x="2960" y="365" /><di:waypoint x="2960" y="595" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_040_Sort_Join_di" bpmnElement="Flow_040_Sort_Join"><di:waypoint x="2170" y="855" /><di:waypoint x="2960" y="855" /><di:waypoint x="2960" y="645" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_041_Join_Dispatch_di" bpmnElement="Flow_041_Join_Dispatch"><di:waypoint x="2985" y="620" /><di:waypoint x="3100" y="620" /><di:waypoint x="3100" y="815" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_042_Dispatch_AwaitMerge_di" bpmnElement="Flow_042_Dispatch_AwaitMerge"><di:waypoint x="3150" y="855" /><di:waypoint x="3215" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_043_AwaitMerge_Await_di" bpmnElement="Flow_043_AwaitMerge_Await"><di:waypoint x="3265" y="855" /><di:waypoint x="3355" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_044_Await_Arrived_di" bpmnElement="Flow_044_Await_Arrived"><di:waypoint x="3405" y="855" /><di:waypoint x="3502" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_045_Await_Delay_di" bpmnElement="Flow_045_Await_Delay"><di:waypoint x="3380" y="830" /><di:waypoint x="3380" y="480" /><di:waypoint x="3502" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_046_Await_Cancel_di" bpmnElement="Flow_046_Await_Cancel"><di:waypoint x="3380" y="830" /><di:waypoint x="3380" y="365" /><di:waypoint x="3502" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_047_Await_NoScan_di" bpmnElement="Flow_047_Await_NoScan"><di:waypoint x="3380" y="880" /><di:waypoint x="3380" y="1655" /><di:waypoint x="3502" y="1655" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_048_Delay_Delay_di" bpmnElement="Flow_048_Delay_Delay"><di:waypoint x="3538" y="480" /><di:waypoint x="3610" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_049_Delay_Reroute_di" bpmnElement="Flow_049_Delay_Reroute"><di:waypoint x="3710" y="480" /><di:waypoint x="3750" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_050_Reroute_AwaitMerge_di" bpmnElement="Flow_050_Reroute_AwaitMerge"><di:waypoint x="3800" y="520" /><di:waypoint x="3800" y="725" /><di:waypoint x="3240" y="725" /><di:waypoint x="3240" y="830" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_051_Cancel_Recall_di" bpmnElement="Flow_051_Cancel_Recall"><di:waypoint x="3538" y="365" /><di:waypoint x="3610" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_052_Recall_CompCancel_di" bpmnElement="Flow_052_Recall_CompCancel"><di:waypoint x="3710" y="365" /><di:waypoint x="3782" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_053_CompCancel_Cancelled_di" bpmnElement="Flow_053_CompCancel_Cancelled"><di:waypoint x="3818" y="365" /><di:waypoint x="3922" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_054_NoScan_Trace_di" bpmnElement="Flow_054_NoScan_Trace"><di:waypoint x="3538" y="1655" /><di:waypoint x="3610" y="1655" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_055_Trace_AwaitMerge_di" bpmnElement="Flow_055_Trace_AwaitMerge"><di:waypoint x="3660" y="1615" /><di:waypoint x="3660" y="1210" /><di:waypoint x="3240" y="1210" /><di:waypoint x="3240" y="880" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_056_TraceTimer_Lost_di" bpmnElement="Flow_056_TraceTimer_Lost"><di:waypoint x="3690" y="1713" /><di:waypoint x="3690" y="1770" /><di:waypoint x="3750" y="1770" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_057_Lost_Lost_di" bpmnElement="Flow_057_Lost_Lost"><di:waypoint x="3850" y="1770" /><di:waypoint x="3922" y="1770" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_058_Arrived_DestScan_di" bpmnElement="Flow_058_Arrived_DestScan"><di:waypoint x="3538" y="855" /><di:waypoint x="3610" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_059_DestScan_Intact_di" bpmnElement="Flow_059_DestScan_Intact"><di:waypoint x="3710" y="855" /><di:waypoint x="3775" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_060_Intact_Intl_di" bpmnElement="Flow_060_Intact_Intl"><di:waypoint x="3825" y="855" /><di:waypoint x="3915" y="855" /><bpmndi:BPMNLabel><dc:Bounds x="3831" y="837" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_061_Intact_DamageMerge_di" bpmnElement="Flow_061_Intact_DamageMerge"><di:waypoint x="3800" y="880" /><di:waypoint x="3800" y="1075" /><di:waypoint x="5315" y="1075" /><bpmndi:BPMNLabel><dc:Bounds x="3806" y="886" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_062_Intl_CustDone_di" bpmnElement="Flow_062_Intl_CustDone"><di:waypoint x="3965" y="855" /><di:waypoint x="4640" y="855" /><di:waypoint x="4640" y="645" /><bpmndi:BPMNLabel><dc:Bounds x="3971" y="837" width="24" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_063_Intl_Customs_di" bpmnElement="Flow_063_Intl_Customs"><di:waypoint x="3940" y="830" /><di:waypoint x="3940" y="480" /><di:waypoint x="4030" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="3946" y="810" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_064_Customs_Cleared_di" bpmnElement="Flow_064_Customs_Cleared"><di:waypoint x="4130" y="480" /><di:waypoint x="4195" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_065_Cleared_CustDone_di" bpmnElement="Flow_065_Cleared_CustDone"><di:waypoint x="4220" y="505" /><di:waypoint x="4220" y="620" /><di:waypoint x="4615" y="620" /><bpmndi:BPMNLabel><dc:Bounds x="4226" y="511" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_066_Cleared_DocReq_di" bpmnElement="Flow_066_Cleared_DocReq"><di:waypoint x="4245" y="480" /><di:waypoint x="4310" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="4251" y="462" width="66" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_067_DocReq_Docs_di" bpmnElement="Flow_067_DocReq_Docs"><di:waypoint x="4410" y="480" /><di:waypoint x="4450" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_068_Docs_CustDone_di" bpmnElement="Flow_068_Docs_CustDone"><di:waypoint x="4550" y="480" /><di:waypoint x="4640" y="480" /><di:waypoint x="4640" y="595" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_069_DocTimer_RTSMerge_di" bpmnElement="Flow_069_DocTimer_RTSMerge"><di:waypoint x="4530" y="422" /><di:waypoint x="4530" y="248" /><di:waypoint x="6040" y="248" /><di:waypoint x="6040" y="830" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_070_CustDone_OFDMerge_di" bpmnElement="Flow_070_CustDone_OFDMerge"><di:waypoint x="4665" y="620" /><di:waypoint x="4755" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_071_OFDMerge_OFD_di" bpmnElement="Flow_071_OFDMerge_OFD"><di:waypoint x="4780" y="595" /><di:waypoint x="4780" y="480" /><di:waypoint x="4870" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_072_OFD_Deliver_di" bpmnElement="Flow_072_OFD_Deliver"><di:waypoint x="4970" y="480" /><di:waypoint x="5200" y="480" /><di:waypoint x="5200" y="1170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_073_Deliver_Outcome_di" bpmnElement="Flow_073_Deliver_Outcome"><di:waypoint x="5250" y="1210" /><di:waypoint x="5315" y="1210" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_074_Outcome_CloseMerge_di" bpmnElement="Flow_074_Outcome_CloseMerge"><di:waypoint x="5365" y="1210" /><di:waypoint x="5480" y="1210" /><di:waypoint x="5480" y="990" /><bpmndi:BPMNLabel><dc:Bounds x="5371" y="1192" width="73" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_075_Outcome_DamageMerge_di" bpmnElement="Flow_075_Outcome_DamageMerge"><di:waypoint x="5340" y="1185" /><di:waypoint x="5340" y="1100" /><bpmndi:BPMNLabel><dc:Bounds x="5228" y="1145" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_076_Outcome_Why_di" bpmnElement="Flow_076_Outcome_Why"><di:waypoint x="5340" y="1235" /><di:waypoint x="5340" y="1295" /><bpmndi:BPMNLabel><dc:Bounds x="5251" y="1248" width="91" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_077_Why_DelAttempts_di" bpmnElement="Flow_077_Why_DelAttempts"><di:waypoint x="5315" y="1320" /><di:waypoint x="4945" y="1320" /><bpmndi:BPMNLabel><dc:Bounds x="5205" y="1289" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_078_Why_AddrQuery_di" bpmnElement="Flow_078_Why_AddrQuery"><di:waypoint x="5340" y="1345" /><di:waypoint x="5340" y="1437" /><bpmndi:BPMNLabel><dc:Bounds x="5226" y="1385" width="104" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_079_Why_RTSPre_di" bpmnElement="Flow_079_Why_RTSPre"><di:waypoint x="5365" y="1320" /><di:waypoint x="6015" y="1320" /><bpmndi:BPMNLabel><dc:Bounds x="5371" y="1263" width="104" height="53" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_080_DelAttempts_LoopMerge_di" bpmnElement="Flow_080_DelAttempts_LoopMerge"><di:waypoint x="4895" y="1320" /><di:waypoint x="4805" y="1320" /><bpmndi:BPMNLabel><dc:Bounds x="4858" y="1302" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_081_DelAttempts_Hold_di" bpmnElement="Flow_081_DelAttempts_Hold"><di:waypoint x="4920" y="1295" /><di:waypoint x="4920" y="1005" /><bpmndi:BPMNLabel><dc:Bounds x="4924" y="1237" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_082_LoopMerge_OFDMerge_di" bpmnElement="Flow_082_LoopMerge_OFDMerge"><di:waypoint x="4780" y="1295" /><di:waypoint x="4780" y="645" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_083_Hold_CloseMerge_di" bpmnElement="Flow_083_Hold_CloseMerge"><di:waypoint x="4970" y="965" /><di:waypoint x="5455" y="965" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_084_HoldTimer_RTSMerge_di" bpmnElement="Flow_084_HoldTimer_RTSMerge"><di:waypoint x="4950" y="907" /><di:waypoint x="4950" y="855" /><di:waypoint x="6015" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_085_AddrQuery_NewAddr_di" bpmnElement="Flow_085_AddrQuery_NewAddr"><di:waypoint x="5322" y="1455" /><di:waypoint x="5250" y="1455" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_086_NewAddr_Surcharge_di" bpmnElement="Flow_086_NewAddr_Surcharge"><di:waypoint x="5150" y="1455" /><di:waypoint x="5085" y="1455" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_087_Surcharge_Surcharge_di" bpmnElement="Flow_087_Surcharge_Surcharge"><di:waypoint x="5035" y="1455" /><di:waypoint x="4938" y="1455" /><bpmndi:BPMNLabel><dc:Bounds x="4998" y="1437" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_088_Surcharge_AddrMerge_di" bpmnElement="Flow_088_Surcharge_AddrMerge"><di:waypoint x="5060" y="1480" /><di:waypoint x="5060" y="1545" /><di:waypoint x="4780" y="1545" /><di:waypoint x="4780" y="1480" /><bpmndi:BPMNLabel><dc:Bounds x="5066" y="1486" width="24" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_089_Surcharge_AddrMerge_di" bpmnElement="Flow_089_Surcharge_AddrMerge"><di:waypoint x="4902" y="1455" /><di:waypoint x="4805" y="1455" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_090_AddrMerge_LoopMerge_di" bpmnElement="Flow_090_AddrMerge_LoopMerge"><di:waypoint x="4780" y="1430" /><di:waypoint x="4780" y="1345" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_091_AddrTimer_RTSPre_di" bpmnElement="Flow_091_AddrTimer_RTSPre"><di:waypoint x="5230" y="1513" /><di:waypoint x="5230" y="1545" /><di:waypoint x="6040" y="1545" /><di:waypoint x="6040" y="1345" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_092_RTSPre_RTSMerge_di" bpmnElement="Flow_092_RTSPre_RTSMerge"><di:waypoint x="6040" y="1295" /><di:waypoint x="6040" y="880" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_093_CloseMerge_Close_di" bpmnElement="Flow_093_CloseMerge_Close"><di:waypoint x="5480" y="940" /><di:waypoint x="5480" y="480" /><di:waypoint x="5570" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_094_Close_Delivered_di" bpmnElement="Flow_094_Close_Delivered"><di:waypoint x="5670" y="480" /><di:waypoint x="5742" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_095_DamageMerge_Inspect_di" bpmnElement="Flow_095_DamageMerge_Inspect"><di:waypoint x="5365" y="1075" /><di:waypoint x="5570" y="1075" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_096_Inspect_Insured_di" bpmnElement="Flow_096_Inspect_Insured"><di:waypoint x="5670" y="1075" /><di:waypoint x="5735" y="1075" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_097_Insured_Uninsured_di" bpmnElement="Flow_097_Insured_Uninsured"><di:waypoint x="5785" y="1075" /><di:waypoint x="5882" y="1075" /><bpmndi:BPMNLabel><dc:Bounds x="5791" y="1057" width="24" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_098_Insured_Claim_di" bpmnElement="Flow_098_Insured_Claim"><di:waypoint x="5760" y="1100" /><di:waypoint x="5760" y="1615" /><bpmndi:BPMNLabel><dc:Bounds x="5766" y="1106" width="31" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_099_Claim_Claim_di" bpmnElement="Flow_099_Claim_Claim"><di:waypoint x="5810" y="1655" /><di:waypoint x="5882" y="1655" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_100_RTSMerge_RTS_di" bpmnElement="Flow_100_RTSMerge_RTS"><di:waypoint x="6065" y="855" /><di:waypoint x="6130" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_101_RTS_Returned_di" bpmnElement="Flow_101_RTS_Returned"><di:waypoint x="6230" y="855" /><di:waypoint x="6302" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_B_CompCharge_ST_Refund_di" bpmnElement="Association_B_CompCharge_ST_Refund"><di:waypoint x="1000" y="423" /><di:waypoint x="1000" y="440" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_SP_RTS" name="Return Parcel to Sender">
+    <bpmndi:BPMNPlane id="BPMNPlane_SP_RTS" bpmnElement="SP_RTS">
+      <bpmndi:BPMNShape id="RT_Start_di" bpmnElement="RT_Start"><dc:Bounds x="162" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="128" y="183" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RT_Haul_di" bpmnElement="RT_Haul"><dc:Bounds x="270" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RT_Charges_di" bpmnElement="RT_Charges"><dc:Bounds x="420" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RT_Notify_di" bpmnElement="RT_Notify"><dc:Bounds x="570" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RT_Handover_di" bpmnElement="RT_Handover"><dc:Bounds x="720" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RT_End_di" bpmnElement="RT_End"><dc:Bounds x="882" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="848" y="183" width="104" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_011_Start_Haul_di" bpmnElement="Flow_011_Start_Haul"><di:waypoint x="198" y="160" /><di:waypoint x="270" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_012_Haul_Charges_di" bpmnElement="Flow_012_Haul_Charges"><di:waypoint x="370" y="160" /><di:waypoint x="420" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_013_Charges_Notify_di" bpmnElement="Flow_013_Charges_Notify"><di:waypoint x="520" y="160" /><di:waypoint x="570" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_014_Notify_Handover_di" bpmnElement="Flow_014_Notify_Handover"><di:waypoint x="670" y="160" /><di:waypoint x="720" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_015_Handover_End_di" bpmnElement="Flow_015_Handover_End"><di:waypoint x="820" y="160" /><di:waypoint x="882" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_SP_Claim" name="Handle Damage Claim">
+    <bpmndi:BPMNPlane id="BPMNPlane_SP_Claim" bpmnElement="SP_Claim">
+      <bpmndi:BPMNShape id="CL_Start_di" bpmnElement="CL_Start"><dc:Bounds x="162" y="202" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="138" y="243" width="85" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Assess_di" bpmnElement="CL_Assess"><dc:Bounds x="270" y="180" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_GwRes_di" bpmnElement="CL_GwRes" isMarkerVisible="true"><dc:Bounds x="435" y="195" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="361" y="243" width="87" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Refund_di" bpmnElement="CL_Refund"><dc:Bounds x="570" y="60" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Replace_di" bpmnElement="CL_Replace"><dc:Bounds x="570" y="180" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Reship_di" bpmnElement="CL_Reship"><dc:Bounds x="570" y="300" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Merge_di" bpmnElement="CL_Merge" isMarkerVisible="true"><dc:Bounds x="755" y="195" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_Notify_di" bpmnElement="CL_Notify"><dc:Bounds x="860" y="180" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CL_End_di" bpmnElement="CL_End"><dc:Bounds x="1022" y="202" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="995" y="243" width="91" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_001_Start_Assess_di" bpmnElement="Flow_001_Start_Assess"><di:waypoint x="198" y="220" /><di:waypoint x="270" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_002_Assess_GwRes_di" bpmnElement="Flow_002_Assess_GwRes"><di:waypoint x="370" y="220" /><di:waypoint x="435" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_003_GwRes_Refund_di" bpmnElement="Flow_003_GwRes_Refund"><di:waypoint x="460" y="195" /><di:waypoint x="460" y="100" /><di:waypoint x="570" y="100" /><bpmndi:BPMNLabel><dc:Bounds x="466" y="175" width="52" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_004_GwRes_Replace_di" bpmnElement="Flow_004_GwRes_Replace"><di:waypoint x="485" y="220" /><di:waypoint x="570" y="220" /><bpmndi:BPMNLabel><dc:Bounds x="491" y="202" width="87" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_005_GwRes_Reship_di" bpmnElement="Flow_005_GwRes_Reship"><di:waypoint x="460" y="245" /><di:waypoint x="460" y="340" /><di:waypoint x="570" y="340" /><bpmndi:BPMNLabel><dc:Bounds x="466" y="251" width="80" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_006_Refund_Merge_di" bpmnElement="Flow_006_Refund_Merge"><di:waypoint x="670" y="100" /><di:waypoint x="780" y="100" /><di:waypoint x="780" y="195" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_007_Replace_Merge_di" bpmnElement="Flow_007_Replace_Merge"><di:waypoint x="670" y="220" /><di:waypoint x="755" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_008_Reship_Merge_di" bpmnElement="Flow_008_Reship_Merge"><di:waypoint x="670" y="340" /><di:waypoint x="780" y="340" /><di:waypoint x="780" y="245" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_009_Merge_Notify_di" bpmnElement="Flow_009_Merge_Notify"><di:waypoint x="805" y="220" /><di:waypoint x="860" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_010_Notify_End_di" bpmnElement="Flow_010_Notify_End"><di:waypoint x="960" y="220" /><di:waypoint x="1022" y="220" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
