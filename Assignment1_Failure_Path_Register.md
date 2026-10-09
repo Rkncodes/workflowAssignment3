@@ -1,6 +1,6 @@
 # Failure Path Register
 
-Model: [`bpmn/Student_Project_Approval.bpmn`](../bpmn/Student_Project_Approval.bpmn)
+Model: [`Assignment1_BPMN_Diagram.bpmn`](Assignment1_BPMN_Diagram.bpmn) · Diagram: [`Assignment1_BPMN_Diagram.png`](Assignment1_BPMN_Diagram.png)
 
 Every row below maps to elements that exist in the diagram. Labels in the last column are the exact `name` values in the BPMN file; a flow label is written as *gateway → "branch label"*. Limits are enforced by the conditions on the gateway branches (visible in the XML as `conditionExpression`).
 

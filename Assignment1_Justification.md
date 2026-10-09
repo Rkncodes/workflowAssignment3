@@ -1,6 +1,6 @@
 # Task and Gateway Justification
 
-Model: [`bpmn/Student_Project_Approval.bpmn`](../bpmn/Student_Project_Approval.bpmn). Labels in `code style` are the exact names in the diagram.
+Model: [`Assignment1_BPMN_Diagram.bpmn`](Assignment1_BPMN_Diagram.bpmn). Labels in `code style` are the exact names in the diagram.
 
 ## 1. Task types
 
@@ -13,7 +13,7 @@ Model: [`bpmn/Student_Project_Approval.bpmn`](../bpmn/Student_Project_Approval.b
 | **Receive task** | Not used | The brief allows the guide's acceptance to be a receive task or a user task. The guide is a lane inside the same pool and works in the same system, so the acceptance is modelled as a user task; a receive task would hide who does the work. Incoming messages that are genuinely unsolicited (withdrawal, guide unavailability) are modelled as message catch events instead. |
 | **Collapsed sub-process** | `Record Allocation & Notify Parties` | Groups the database write and the two notifications with their three retry loops. It keeps eleven retry-handling elements out of the main diagram, and gives one place to attach the "all retries exhausted" error boundary. It is entirely automated, so it sits in the system lane. |
 
-Automated tasks are only in the *Project Management System* lane and user tasks only in the four human lanes; this is one of the checks in `tools/validate.mjs`.
+Automated tasks are only in the *Project Management System* lane and user tasks only in the four human lanes.
 
 ## 2. Gateways
 
@@ -91,7 +91,7 @@ Business results such as "data invalid", "similarity too high" or "guide decline
 
 ## 4. Loops and limits
 
-All loops are ordinary sequence-flow loops through explicit merge gateways, each guarded by a counter condition on a gateway branch (see the "Bounded loops" table in the [Failure Path Register](Failure_Path_Register.md)). Loop markers and multi-instance markers are not used: the repeated work is never "the same task again until done", it is a path through several tasks and lanes, and the exit branch needs to be visible. The one loop without a counter is reallocation after `Guide unavailable`; it cannot spin because every iteration needs a new external message and the 7-day timer ends the wait.
+All loops are ordinary sequence-flow loops through explicit merge gateways, each guarded by a counter condition on a gateway branch (see the "Bounded loops" table in the [Failure Path Register](Assignment1_Failure_Path_Register.md)). Loop markers and multi-instance markers are not used: the repeated work is never "the same task again until done", it is a path through several tasks and lanes, and the exit branch needs to be visible. The one loop without a counter is reallocation after `Guide unavailable`; it cannot spin because every iteration needs a new external message and the 7-day timer ends the wait.
 
 ## 5. Escalation
 
